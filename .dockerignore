@@ -1,0 +1,7 @@
+.git
+.direnv
+.mypy_cache
+.pytest_cache
+.volumes
+.env
+.envrc

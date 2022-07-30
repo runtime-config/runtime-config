@@ -1,0 +1,20 @@
+import click
+import uvicorn
+
+
+@click.group()
+def cli() -> None:
+    pass
+
+
+@cli.command()
+@click.option('--host', default='0.0.0.0')
+@click.option('--port', default=8080)
+@click.option('--reload', default=False, is_flag=True)
+@click.option('--workers', default=None, type=int)
+def serve(host: str, port: int, reload: bool, workers: int | None = None) -> None:
+    uvicorn.run("runtime_config.wsgi:app", host=host, port=port, reload=reload, workers=workers)
+
+
+if __name__ == "__main__":
+    cli()

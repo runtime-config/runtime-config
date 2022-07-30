@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "runtime-settings"
+version = "0.0.1"
+description = "Server for storing service settings."
+license = "MIT"
+authors = ["Alexey Petrunnik <petrunnik.a@mail.ru>"]
+packages = [{include = "runtime_config", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.79.1"
+uvicorn = "^0.18.3"
+pydantic = {version = "^1.10.1", extras = ["dotenv"]}
+psycopg2 = "^2.9.3"
+databases = {version = "^0.6.1", extras = ["aiopg"]}
+SQLAlchemy = {extras = ["mypy"], version = "^1.4.40"}
+alembic = "^1.8.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.3"
+pytest-asyncio = "^0.18.3"
+pytest-env = "^0.6.2"
+pytest-mock = "^3.7.0"
+autopep8 = "1.6.0"
+black = "22.8.0"
+flake8 = "4.0.1"
+isort = "5.10.1"
+mypy = "0.971"
+pre-commit = "^2.19.0"
+httpx = "^0.23.0"
+
+[tool.poetry.scripts]
+runtime-config = "runtime_config.cli:cli"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ['./src']
+testpaths = ["tests"]
+env = [
+    "CURRENT_ENV=test",
+]
+
+[tool.black]
+target_version = ['py310']
+line-length = 119
+skip_string_normalization = true
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+python_version = "3.10"
+disallow_any_generics = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module="uvicorn.*"
+ignore_missing_imports = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
