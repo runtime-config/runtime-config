@@ -43,7 +43,7 @@ VALUES ('timeout', '1', 'int', 'some-service-name');
 With the help of the [client](https://github.com/aleksey925/runtime-config-py), this variable can be get like this:
 
 ```python
-source = RuntimeConfigServer(host='http://127.0.0.1:8080', service_name='some-service-name')
+source = ConfigServerSrc(host='http://127.0.0.1:8080', service_name='some-service-name')
 config = await RuntimeConfig.create(init_settings={}, source=source)
 print(config.get('timeout'))
 ```
@@ -58,7 +58,7 @@ VALUES ('db__timeout', '1', 'int', 'some-service-name');
 With the help of the [client](https://github.com/aleksey925/runtime-config-py), this variable can be get like this:
 
 ```python
-source = RuntimeConfigServer(host='http://127.0.0.1:8080', service_name='some-service-name')
+source = ConfigServerSrc(host='http://127.0.0.1:8080', service_name='some-service-name')
 config = await RuntimeConfig.create(init_settings={'db': {'timeout': 10}}, source=source)
 print(config.db['timeout'])
 ```
