@@ -73,6 +73,8 @@ Available variable types:
 
 # Deploy
 
+**docker-compose**
+
 1. Create a `.env` file with the necessary environment variables. An example of an `.env` file can be found in 
 `.env.example`.
 
@@ -83,6 +85,20 @@ Available variable types:
    ```
    docker compose up
    ```
+
+**Other**
+
+1. Define all environment variables necessary for the service to work. You can find them in `.env.example`.
+
+2. Select a docker image with the latest version of the application. You can find docker images 
+[here](https://github.com/aleksey925/runtime-config/pkgs/container/runtime-config).
+
+3. Deploy postgres.
+
+4. Apply all migrations to postgres. Run the following `alembic upgrade head` command inside the docker image.
+
+5. Run the selected docker image. When starting, you need to pass the `serve` argument, which means that the web 
+application will be launched to process requests from client libraries.
 
 # Build docker image
 
@@ -219,17 +235,9 @@ created.
 
 ## Start service in docker
 
-1. Build up-to-date docker image
-
-   ```
-   make build-dev-img
-   ```
-
-2. Start the service
-
-   ```
-   docker compose -f docker-compose.dev.yml up
-   ```
+```
+make up
+```
 
 ## Work with migrations
 
