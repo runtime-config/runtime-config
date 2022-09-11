@@ -1,30 +1,23 @@
 services:
 
   app:
+    build:
+      context: .
+      args:
+        - CURRENT_ENV=dev
     image: ghcr.io/aleksey925/runtime-config:dev
     restart: on-failure:10
     env_file:
       - .env
     environment:
       - DB_HOST=db
+    volumes:
+      - ./src:/opt/app/src
     ports:
       - "8080:8080"
     links:
       - db
-    command: serve
-
-  migration:
-    image: ghcr.io/aleksey925/runtime-config:dev
-    restart: on-failure:10
-    env_file:
-      - .env
-    environment:
-      - DB_HOST=db
-    depends_on:
-      - db
-    links:
-      - db
-    entrypoint: /bin/bash -c 'alembic upgrade head'
+    entrypoint: /bin/bash -c 'alembic upgrade head && runtime-config serve --reload'
 
   db:
     image: postgres:14-alpine
