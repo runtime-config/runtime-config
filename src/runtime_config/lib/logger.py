@@ -2,10 +2,6 @@ import logging
 import typing as t
 
 
-def init_logger() -> None:
-    pass
-
-
 def root_logger_cleaner() -> t.Generator[None, None, None]:
     """
     Resets the root logger to the settings it had when the coroutine was initialized
