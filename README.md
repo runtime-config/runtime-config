@@ -19,18 +19,18 @@ Table of contents:
 
 # Overview
 
-This application is responsible for storing settings and providing an API for the client library. If you want to see 
-the api of this service, follow the [link](http://0.0.0.0:8080/docs) after starting the service. Swagger will be 
+This application is responsible for storing settings and providing an API for the client library. If you want to see
+the api of this service, follow the [link](http://0.0.0.0:8080/docs) after starting the service. Swagger will be
 available there.
 
-It's very important for understanding who created / changed some settings when a team has the ability to change 
-application settings in real time. Therefore, the database implements logging of all changes to the setting table. 
-You can see them in the setting_history table. The logs contain information about users who made changes and when 
+It's very important for understanding who created / changed some settings when a team has the ability to change
+application settings in real time. Therefore, the database implements logging of all changes to the setting table.
+You can see them in the setting_history table. The logs contain information about users who made changes and when
 changes were made.
 
 # Usage
 
-At the moment, WEB UI is not implemented, so now you need to edit the description of variables directly in the service 
+At the moment, WEB UI is not implemented, so now you need to edit the description of variables directly in the service
 database. You can do this in the settings table.
 
 An example of a request to create a variable that will be used in `some-service-name` service:
@@ -75,7 +75,7 @@ Available variable types:
 
 **docker-compose**
 
-1. Create a `.env` file with the necessary environment variables. An example of an `.env` file can be found in 
+1. Create a `.env` file with the necessary environment variables. An example of an `.env` file can be found in
 `.env.example`.
 
 2. Copy docker-compose.yml.
@@ -90,14 +90,14 @@ Available variable types:
 
 1. Define all environment variables necessary for the service to work. You can find them in `.env.example`.
 
-2. Select a docker image with the latest version of the application. You can find docker images 
+2. Select a docker image with the latest version of the application. You can find docker images
 [here](https://github.com/aleksey925/runtime-config/pkgs/container/runtime-config).
 
 3. Deploy postgres.
 
 4. Apply all migrations to postgres. Run the following `alembic upgrade head` command inside the docker image.
 
-5. Run the selected docker image. When starting, you need to pass the `serve` argument, which means that the web 
+5. Run the selected docker image. When starting, you need to pass the `serve` argument, which means that the web
 application will be launched to process requests from client libraries.
 
 # Build docker image

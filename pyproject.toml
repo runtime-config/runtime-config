@@ -15,6 +15,7 @@ psycopg2 = "^2.9.3"
 databases = {version = "^0.6.1", extras = ["aiopg"]}
 SQLAlchemy = {extras = ["mypy"], version = "^1.4.40"}
 alembic = "^1.8.1"
+structlog = "^22.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"

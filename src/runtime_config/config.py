@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 
 from pydantic import PostgresDsn as PostgresDsnOrig
@@ -14,10 +15,27 @@ class PostgresDsn(PostgresDsnOrig):
     }
 
 
+class LogMode(Enum):
+    json = 'json'
+    simple = 'simple'
+
+
+class LogLevel(Enum):
+    critical = 'critical'
+    error = 'error'
+    warning = 'warning'
+    info = 'info'
+    debug = 'debug'
+    notset = 'notset'
+
+
 class Config(BaseSettings):
     project_dir: Path = Path(__file__).absolute().parent.parent.parent
     app_dir: Path = Path(__file__).absolute().parent
     current_env: str = Field(default='dev')
+
+    log_mode: LogMode = LogMode.simple
+    log_level: LogLevel = LogLevel.info
 
     # db
     db_host: str = Field(default='db')

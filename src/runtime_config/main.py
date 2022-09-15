@@ -5,7 +5,7 @@ from fastapi import FastAPI
 
 from runtime_config.config import Config, get_config
 from runtime_config.lib.db import close_db, init_db
-from runtime_config.lib.logger import init_logger
+from runtime_config.logger import init_logger
 from runtime_config.web.routes import init_routes
 
 
@@ -15,9 +15,10 @@ def init_hooks(application: FastAPI, config: Config) -> None:
 
 
 def app_factory(app_hooks: t.Callable[[FastAPI, Config], None] = init_hooks) -> FastAPI:
-    init_logger()
-
     config = get_config()
+
+    init_logger(log_mode=config.log_mode.value, log_level=config.log_level)
+
     application = FastAPI()
     app_hooks(application, config)
 
