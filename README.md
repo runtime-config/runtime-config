@@ -1,3 +1,5 @@
+![license](https://img.shields.io/github/license/aleksey925/runtime-config?style=for-the-badge) [![version](https://img.shields.io/github/v/release/aleksey925/runtime-config?display_name=tag&style=for-the-badge)](https://github.com/aleksey925/runtime-config/pkgs/container/runtime-config) ![coverage](https://img.shields.io/codecov/c/github/aleksey925/runtime-config/master?style=for-the-badge) [![tests status](https://img.shields.io/github/workflow/status/aleksey925/runtime-config/Tests/master?style=for-the-badge)](https://github.com/aleksey925/runtime-config/actions?query=branch%3Amaster)
+
 runtime-config
 ==============
 
