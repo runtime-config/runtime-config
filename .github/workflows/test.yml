@@ -1,0 +1,92 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - 'master'
+
+env:
+  POETRY_VERSION: "1.1.13"
+  MIN_COVERAGE: "88"
+  # app envs
+  DB_USER: "admin"
+  DB_PASSWORD: "admin"
+  DB_NAME: "runtime_config"
+  DB_HOST: "127.0.0.1"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install poetry
+        run: |
+          wget https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
+          python ./get-poetry.py --version $POETRY_VERSION
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: poetry install
+        env:
+          POETRY_VIRTUALENVS_CREATE: false
+      - name: Run lint
+        run: poetry run pre-commit run --all
+
+  test:
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: write
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: "${{ env.DB_USER }}"
+          POSTGRES_PASSWORD: "${{ env.DB_PASSWORD }}"
+          POSTGRES_DB: "${{ env.DB_NAME }}"
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install poetry
+        run: |
+          wget https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
+          python ./get-poetry.py --version $POETRY_VERSION
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: poetry install
+        env:
+          POETRY_VIRTUALENVS_CREATE: false
+      - name: Run tests
+        run: poetry run pytest --cov="runtime_config" .
+      - name: Generate report
+        run: coverage xml && coverage json
+      - name: Check coverage
+        run: |
+          TOTAL_COVERAGE=$(python -c "import json; print(json.load(open('coverage.json'))['totals']['percent_covered_display'])")
+          if [[ "$TOTAL_COVERAGE" -lt "$MIN_COVERAGE" ]]; then
+            echo "Too low code coverage!"
+            exit 1;
+          fi
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true
