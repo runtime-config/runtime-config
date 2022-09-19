@@ -8,16 +8,16 @@ async def test_get_settings(async_client, db, setting_data):
 
     # act
     resp = await async_client.get(url)
+    resp_data = resp.json()
 
     # assert
-    assert resp.json() == [
-        {
-            'name': setting_data['name'],
-            'value': setting_data['value'],
-            'value_type': setting_data['value_type'].value,
-            'disable': setting_data['disable'],
-        }
-    ]
+    assert len(resp_data) == 1
+    assert resp_data[0] == {
+        'name': setting_data['name'],
+        'value': setting_data['value'],
+        'value_type': setting_data['value_type'].value,
+        'disable': setting_data['disable'],
+    }
 
 
 async def test_health_check(async_client, db, setting_data):
