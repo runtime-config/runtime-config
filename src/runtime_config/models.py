@@ -17,7 +17,7 @@ class Setting(Base):  # type: ignore
     value_type = Column(Enum(ValueType), nullable=False)
     disable = Column(Boolean, server_default=expression.false(), nullable=False)
     service_name = Column(Text, nullable=False)
-    user_name = Column(Text)
+    created_by_db_user = Column(Text)
     updated_at = Column(DateTime, nullable=False)
 
     __table_args__ = (UniqueConstraint('name', 'service_name', name='unique_setting_name_per_service'),)
@@ -27,11 +27,12 @@ class SettingHistory(Base):  # type: ignore
     __tablename__ = 'setting_history'
 
     id = Column(Integer, primary_key=True)
-    setting_id = Column(Integer)
     name = Column(Text, nullable=False)
     value = Column(Text)
     value_type = Column(Enum(ValueType), nullable=False)
     disable = Column(Boolean, nullable=False)
     service_name = Column(Text, nullable=False)
-    user_name = Column(Text, nullable=False)
+    created_by_db_user = Column(Text, nullable=False)
     updated_at = Column(DateTime, nullable=False)
+    is_deleted = Column(Boolean, server_default=expression.false(), nullable=False)
+    deleted_by_db_user = Column(Text)

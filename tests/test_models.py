@@ -1,7 +1,8 @@
 import pytest
 from databases import Database
 from psycopg2.errors import UniqueViolation  # noqa
-from sqlalchemy import func, select, update
+from pytest_mock import MockerFixture
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from runtime_config.enums.settings import ValueType
@@ -16,9 +17,9 @@ async def test_setting__user_field_is_filled_with_non_existing_user__valid_value
     setting_data,
 ) -> None:
     # arrange
-    values = {**setting_data, 'user_name': 'not_valid_username'}
+    values = {**setting_data, 'created_by_db_user': 'not_valid_username'}
     query = insert(Setting).values(values)
-    expected_user_name = config.db_user
+    expected_created_by_db_user = config.db_user
 
     # act
     await db.execute(query)
@@ -29,12 +30,13 @@ async def test_setting__user_field_is_filled_with_non_existing_user__valid_value
     assert all_settings[0] == {
         **setting_data,
         'id': 1,
-        'user_name': expected_user_name,
+        'created_by_db_user': expected_created_by_db_user,
         'updated_at': mocker.ANY,
     }
 
 
-async def test_setting__change_row_in_table__historical_record_created(
+async def test_setting__update_row__historical_record_created(
+    mocker: MockerFixture,
     db: Database,
     setting_data,
 ):
@@ -51,9 +53,35 @@ async def test_setting__change_row_in_table__historical_record_created(
     assert len(history_records) == 1
     assert dict(history_records[0]) == {
         **created_setting,
-        'id': 1,
-        'setting_id': created_setting['id'],
+        'id': mocker.ANY,
         'value_type': ValueType(created_setting['value_type']),
+        'is_deleted': False,
+        'deleted_by_db_user': None,
+    }
+
+
+async def test_setting__delete_row__row_moved_to_setting_history_table(
+    mocker: MockerFixture,
+    db: Database,
+    setting_data,
+):
+    # arrange
+    created_setting = await create_setting(db, setting_data)
+
+    # act
+    count_history_before = await db.fetch_one(select(func.count()).select_from(SettingHistory))
+    await db.execute(delete(Setting).where(Setting.id == created_setting['id']))
+    history_records = await db.fetch_all(select(SettingHistory))
+
+    # assert
+    assert count_history_before[0] == 0
+    assert len(history_records) == 1
+    assert dict(history_records[0]) == {
+        **created_setting,
+        'id': mocker.ANY,
+        'value_type': ValueType(created_setting['value_type']),
+        'is_deleted': True,
+        'deleted_by_db_user': 'admin',
     }
 
 

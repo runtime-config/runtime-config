@@ -13,5 +13,5 @@ def setting_data_fixture(config):
         'value_type': ValueType.int,
         'disable': False,
         'service_name': 'service-name',
-        'user_name': config.db_user,
+        'created_by_db_user': config.db_user,
     }
