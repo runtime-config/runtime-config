@@ -8,8 +8,8 @@ from runtime_config.repositories.db.entities import SettingData
 from runtime_config.web.entities import (
     CreateNewSettingRequest,
     EditSettingRequest,
-    GetServiceSettingsLegacyResponse,
     GetAllSettingsRequest,
+    GetServiceSettingsLegacyResponse,
     GetSettingResponse,
     OperationStatusResponse,
     SettingSearchRequest,
