@@ -1,8 +1,10 @@
 import psycopg2.errors
-from fastapi import APIRouter
+from aiopg.sa import SAConnection
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from runtime_config.enums.status import ResponseStatus
+from runtime_config.lib.db import get_db_conn
 from runtime_config.repositories.db import repo as db_repo
 from runtime_config.repositories.db.entities import SettingData
 from runtime_config.web.entities import (
@@ -19,10 +21,12 @@ router = APIRouter()
 
 
 @router.post('/setting/create', response_model=SettingData, responses={400: {'model': OperationStatusResponse}})
-async def create_setting(payload: CreateNewSettingRequest) -> SettingData | JSONResponse:
+async def create_setting(
+    payload: CreateNewSettingRequest, db_conn: SAConnection = Depends(get_db_conn)
+) -> SettingData | JSONResponse:
     response: SettingData | JSONResponse
     try:
-        created_setting = await db_repo.create_new_setting(payload.dict())
+        created_setting = await db_repo.create_new_setting(conn=db_conn, values=payload.dict())
     except psycopg2.errors.UniqueViolation:
         response = JSONResponse(
             content={'status': ResponseStatus.error.value, 'message': 'Variable with the same name already exists'},
@@ -45,8 +49,10 @@ async def create_setting(payload: CreateNewSettingRequest) -> SettingData | JSON
     response_model=OperationStatusResponse,
     responses={400: {'model': OperationStatusResponse}},
 )
-async def delete_setting(setting_id: int) -> OperationStatusResponse | JSONResponse:
-    if await db_repo.delete_setting(setting_id):
+async def delete_setting(
+    setting_id: int, db_conn: SAConnection = Depends(get_db_conn)
+) -> OperationStatusResponse | JSONResponse:
+    if await db_repo.delete_setting(conn=db_conn, setting_id=setting_id):
         return {'status': ResponseStatus.success}
     else:
         return JSONResponse(
@@ -59,10 +65,12 @@ async def delete_setting(setting_id: int) -> OperationStatusResponse | JSONRespo
 
 
 @router.post('/setting/edit', response_model=SettingData, responses={400: {'model': OperationStatusResponse}})
-async def edit_setting(payload: EditSettingRequest) -> SettingData | JSONResponse:
+async def edit_setting(
+    payload: EditSettingRequest, db_conn: SAConnection = Depends(get_db_conn)
+) -> SettingData | JSONResponse:
     response: SettingData | JSONResponse
     edited_setting = await db_repo.edit_setting(
-        setting_id=payload.id, values=payload.dict(exclude={'id'}, exclude_unset=True)
+        conn=db_conn, setting_id=payload.id, values=payload.dict(exclude={'id'}, exclude_unset=True)
     )
     if edited_setting:
         response = edited_setting
@@ -76,26 +84,35 @@ async def edit_setting(payload: EditSettingRequest) -> SettingData | JSONRespons
 
 
 @router.get('/setting/get/{setting_id}', response_model=GetSettingResponse)
-async def get_setting(setting_id: int, include_history: bool = False) -> GetSettingResponse:
-    found_setting, change_history = await db_repo.get_setting(setting_id=setting_id, include_history=include_history)
+async def get_setting(
+    setting_id: int, include_history: bool = False, db_conn: SAConnection = Depends(get_db_conn)
+) -> GetSettingResponse:
+    found_setting, change_history = await db_repo.get_setting(
+        conn=db_conn, setting_id=setting_id, include_history=include_history
+    )
     return GetSettingResponse(setting=found_setting, change_history=change_history)
 
 
 @router.post('/setting/search', response_model=list[SettingData])
-async def search_settings(payload: SettingSearchRequest) -> list[SettingData]:
+async def search_settings(
+    payload: SettingSearchRequest, db_conn: SAConnection = Depends(get_db_conn)
+) -> list[SettingData]:
     return [
         setting
         async for setting in db_repo.search_settings(
-            search_params=payload.search_params, offset=payload.offset, limit=payload.limit
+            conn=db_conn, search_params=payload.search_params, offset=payload.offset, limit=payload.limit
         )
     ]
 
 
 @router.post('/setting/all/{service_name}', response_model=list[SettingData])
-async def get_all_service_settings(service_name: str, payload: GetAllSettingsRequest) -> list[SettingData]:
+async def get_all_service_settings(
+    service_name: str, payload: GetAllSettingsRequest, db_conn: SAConnection = Depends(get_db_conn)
+) -> list[SettingData]:
     return [
         setting
         async for setting in db_repo.get_service_settings(
+            conn=db_conn,
             service_name=service_name,
             offset=payload.offset,
             limit=payload.limit,
@@ -104,9 +121,9 @@ async def get_all_service_settings(service_name: str, payload: GetAllSettingsReq
 
 
 @router.get('/get_settings/{service_name}', response_model=list[GetServiceSettingsLegacyResponse], deprecated=True)
-async def get_service_settings(service_name: str) -> list[SettingData]:
+async def get_service_settings(service_name: str, db_conn: SAConnection = Depends(get_db_conn)) -> list[SettingData]:
     # not removed for backwards compatibility with client library
-    return [setting async for setting in db_repo.get_service_settings(service_name)]
+    return [setting async for setting in db_repo.get_service_settings(conn=db_conn, service_name=service_name)]
 
 
 @router.get('/health-check')

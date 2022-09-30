@@ -1,18 +1,13 @@
+from __future__ import annotations
+
 from enum import Enum
 from pathlib import Path
 
-from pydantic import PostgresDsn as PostgresDsnOrig
+from pydantic import PostgresDsn
 from pydantic.env_settings import BaseSettings
 from pydantic.fields import Field
 
-_inst: dict[str, 'Config'] = {}
-
-
-class PostgresDsn(PostgresDsnOrig):
-    allowed_schemes = {
-        *PostgresDsnOrig.allowed_schemes,
-        'postgresql+aiopg',
-    }
+_inst: dict[str, Config] = {}
 
 
 class LogMode(Enum):
@@ -48,7 +43,7 @@ class Config(BaseSettings):
     def db_dsn(self) -> PostgresDsn:
         return PostgresDsn(
             url=None,
-            scheme='postgresql+aiopg',
+            scheme='postgresql',
             user=self.db_user,
             password=self.db_password,
             host=self.db_host,

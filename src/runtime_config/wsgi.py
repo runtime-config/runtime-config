@@ -1,3 +1,3 @@
-from runtime_config.main import app_factory
+from runtime_config.main import app_factory  # pragma: no cover
 
-app = app_factory()
+app = app_factory()  # pragma: no cover

@@ -1,9 +1,9 @@
 import typing as t
 
+from aiopg.sa import SAConnection
 from sqlalchemy import delete, desc, insert, select, update
 from sqlalchemy.sql.expression import literal_column
 
-from runtime_config.lib.db import get_db
 from runtime_config.models import Setting, SettingHistory
 from runtime_config.repositories.db.entities import (
     SearchParams,
@@ -12,15 +12,13 @@ from runtime_config.repositories.db.entities import (
 )
 
 
-async def delete_setting(setting_id: int) -> bool:
-    db = get_db()
+async def delete_setting(conn: SAConnection, setting_id: int) -> bool:
     query = delete(Setting).where(Setting.id == setting_id).returning(Setting.id)
-    deleted_row_id = await db.fetch_one(query)
+    deleted_row_id = await (await conn.execute(query)).fetchone()
     return bool(deleted_row_id)
 
 
-async def create_new_setting(values: dict[str, t.Any]) -> SettingData | None:
-    db = get_db()
+async def create_new_setting(conn: SAConnection, values: dict[str, t.Any]) -> SettingData | None:
     query = (
         insert(Setting)
         .values(values)
@@ -35,26 +33,25 @@ async def create_new_setting(values: dict[str, t.Any]) -> SettingData | None:
             Setting.updated_at,
         )
     )
-    row = await db.fetch_one(query)
+
+    row = await (await conn.execute(query)).fetchone()
 
     created_setting = None
     if row is not None:
-        created_setting = SettingData(**row)  # type: ignore[arg-type]
+        created_setting = SettingData(**row)
 
     return created_setting
 
 
-async def edit_setting(setting_id: int, values: dict[str, t.Any]) -> SettingData | None:
-    db = get_db()
+async def edit_setting(conn: SAConnection, setting_id: int, values: dict[str, t.Any]) -> SettingData | None:
     query = update(Setting).where(Setting.id == setting_id).values(values).returning(literal_column('*'))
-    row = await db.fetch_one(query)
-    return SettingData(**row) if row else None  # type: ignore[arg-type]
+    row = await (await conn.execute(query)).fetchone()
+    return SettingData(**row) if row else None
 
 
 async def get_setting(
-    setting_id: int, include_history: bool = False
+    conn: SAConnection, setting_id: int, include_history: bool = False
 ) -> tuple[SettingData | None, list[SettingHistoryData]]:
-    db = get_db()
     query = select(
         Setting.id,
         Setting.name,
@@ -66,10 +63,10 @@ async def get_setting(
         Setting.updated_at,
     ).where(Setting.id == setting_id)
 
-    row = await db.fetch_one(query)
+    row = await (await conn.execute(query)).fetchone()
     found_setting = None
     if row is not None:
-        found_setting = SettingData(**row)  # type: ignore[arg-type]
+        found_setting = SettingData(**row)
 
     history_rows = []
     if include_history and found_setting:
@@ -87,19 +84,19 @@ async def get_setting(
                 SettingHistory.deleted_by_db_user,
             )
             .where(
-                SettingHistory.name == found_setting.name, SettingHistory.service_name == found_setting.service_name
+                SettingHistory.name == found_setting.name,
+                SettingHistory.service_name == found_setting.service_name,
             )
             .order_by(desc(SettingHistory.updated_at))
         )
-        history_rows = [SettingHistoryData(**row) async for row in db.iterate(query_history)]
+        history_rows = [SettingHistoryData(**row) async for row in conn.execute(query_history)]
 
     return found_setting, history_rows
 
 
 async def search_settings(
-    search_params: SearchParams, offset: int = 0, limit: int = 30
+    conn: SAConnection, search_params: SearchParams, offset: int = 0, limit: int = 30
 ) -> t.AsyncIterable[SettingData]:
-    db = get_db()
     query = (
         select(
             Setting.id,
@@ -121,14 +118,13 @@ async def search_settings(
     if 'service_name' in search_params:
         query = query.where(Setting.service_name == search_params['service_name'])
 
-    async for row in db.iterate(query):
+    async for row in conn.execute(query):
         yield SettingData(**row)
 
 
 async def get_service_settings(
-    service_name: str, offset: int = 0, limit: int | None = None
+    conn: SAConnection, service_name: str, offset: int = 0, limit: int | None = None
 ) -> t.AsyncIterable[SettingData]:
-    db = get_db()
     query = (
         select(
             Setting.id,
@@ -146,5 +142,5 @@ async def get_service_settings(
     if limit:
         query = query.limit(limit)
 
-    async for row in db.iterate(query):
+    async for row in conn.execute(query):
         yield SettingData(**row)
