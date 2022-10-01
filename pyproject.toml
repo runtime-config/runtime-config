@@ -12,6 +12,7 @@ fastapi = "^0.79.1"
 uvicorn = "^0.18.3"
 pydantic = {version = "^1.10.1", extras = ["dotenv"]}
 psycopg2 = "^2.9.3"
+types-psycopg2 = "^2.9.21"
 databases = {version = "^0.6.1", extras = ["aiopg"]}
 SQLAlchemy = {extras = ["mypy"], version = "^1.4.40"}
 alembic = "^1.8.1"

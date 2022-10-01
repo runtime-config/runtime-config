@@ -16,12 +16,9 @@ def init_hooks(application: FastAPI, config: Config) -> None:
 
 def app_factory(app_hooks: t.Callable[[FastAPI, Config], None] = init_hooks) -> FastAPI:
     config = get_config()
-
     init_logger(log_mode=config.log_mode.value, log_level=config.log_level)
 
-    application = FastAPI()
+    application = FastAPI(title='runtime-config')
     app_hooks(application, config)
-
     init_routes(application)
-
     return application
