@@ -10,7 +10,7 @@ on:
 
 env:
   POETRY_VERSION: "1.1.13"
-  MIN_COVERAGE: "88"
+  MIN_COVERAGE: "95"
   # app envs
   DB_USER: "admin"
   DB_PASSWORD: "admin"

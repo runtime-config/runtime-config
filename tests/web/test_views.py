@@ -1,6 +1,6 @@
 import copy
 
-from databases import Database
+from aiopg.sa import SAConnection
 from httpx import AsyncClient
 from pytest_mock import MockerFixture
 
@@ -8,7 +8,7 @@ from runtime_config.enums.settings import ValueType
 from tests.db_utils import count_settings, create_setting, get_all_settings
 
 
-async def test_create_setting(mocker: MockerFixture, async_client: AsyncClient, db: Database, setting_data):
+async def test_create_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
     # arrange
     url = '/setting/create'
 
@@ -21,7 +21,7 @@ async def test_create_setting(mocker: MockerFixture, async_client: AsyncClient, 
     resp = await async_client.post(url, json=setting_data)
     resp_data = resp.json()
 
-    count_setting = await count_settings(db)
+    count_setting = await count_settings(db_conn)
 
     resp_second = await async_client.post(url, json=setting_data)
     resp_second_data = resp_second.json()
@@ -40,7 +40,7 @@ async def test_create_setting(mocker: MockerFixture, async_client: AsyncClient, 
 
 
 async def test_create_setting__raise_unexpected_exc__return_400(
-    mocker: MockerFixture, async_client: AsyncClient, db: Database, setting_data
+    mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data
 ):
     # arrange
     url = '/setting/create'
@@ -58,9 +58,9 @@ async def test_create_setting__raise_unexpected_exc__return_400(
     assert resp_data == {'status': 'error', 'message': 'Failed to create new setting'}
 
 
-async def test_delete_setting(async_client: AsyncClient, db: Database, setting_data):
+async def test_delete_setting(async_client: AsyncClient, db_conn: SAConnection, setting_data):
     # arrange
-    created = await create_setting(db, setting_data)
+    created = await create_setting(db_conn, setting_data)
     url = f'/setting/delete/{created["id"]}'
 
     # act
@@ -70,10 +70,12 @@ async def test_delete_setting(async_client: AsyncClient, db: Database, setting_d
     # assert
     assert resp.status_code == 200
     assert resp_data == {'status': 'success'}
-    assert len(await get_all_settings(db)) == 0
+    assert len(await get_all_settings(db_conn)) == 0
 
 
-async def test_delete_setting__setting_not_found__return_400(async_client: AsyncClient, db: Database, setting_data):
+async def test_delete_setting__setting_not_found__return_400(
+    async_client: AsyncClient, db_conn: SAConnection, setting_data
+):
     # arrange
     url = f'/setting/delete/{999}'
 
@@ -86,10 +88,10 @@ async def test_delete_setting__setting_not_found__return_400(async_client: Async
     assert resp_data == {'status': 'error', 'message': 'Could not find the setting with the specified id'}
 
 
-async def test_edit_setting(mocker: MockerFixture, async_client: AsyncClient, db: Database, setting_data):
+async def test_edit_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
     # arrange
     url = '/setting/edit'
-    created = await create_setting(db, setting_data)
+    created = await create_setting(db_conn, setting_data)
     new = {
         'id': created['id'],
         'value': '99',
@@ -109,7 +111,9 @@ async def test_edit_setting(mocker: MockerFixture, async_client: AsyncClient, db
     }
 
 
-async def test_edit_setting__setting_not_found__return_400(async_client: AsyncClient, db: Database, setting_data):
+async def test_edit_setting__setting_not_found__return_400(
+    async_client: AsyncClient, db_conn: SAConnection, setting_data
+):
     # arrange
     url = '/setting/edit'
     payload = {'id': 999, 'name': 'some_name'}
@@ -123,9 +127,9 @@ async def test_edit_setting__setting_not_found__return_400(async_client: AsyncCl
     assert resp_data == {'status': 'error', 'message': 'Setting with the specified id was not found'}
 
 
-async def test_get_setting(mocker: MockerFixture, async_client: AsyncClient, db: Database, setting_data):
+async def test_get_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
     # arrange
-    created = await create_setting(db, setting_data)
+    created = await create_setting(db_conn, setting_data)
     await async_client.post('/setting/edit', json={'id': created['id'], 'value': '444'})
     expected_resp_with_history = {
         'change_history': [
@@ -172,7 +176,7 @@ async def test_get_setting(mocker: MockerFixture, async_client: AsyncClient, db:
 
 
 async def test_get_settings__getting_a_non_existent_setting__return_empty_resp(
-    async_client: AsyncClient, db: Database, setting_data
+    async_client: AsyncClient, db_conn: SAConnection, setting_data
 ):
     # act
     resp = await async_client.get('/setting/get/999')
@@ -183,11 +187,11 @@ async def test_get_settings__getting_a_non_existent_setting__return_empty_resp(
     assert resp_data == {'change_history': [], 'setting': None}
 
 
-async def test_search_settings(mocker: MockerFixture, async_client: AsyncClient, db: Database, setting_data):
+async def test_search_settings(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
     # arrange
-    await create_setting(db, setting_data)
+    await create_setting(db_conn, setting_data)
     await create_setting(
-        db,
+        db_conn,
         {
             **setting_data,
             'name': 'name',
@@ -217,10 +221,10 @@ async def test_search_settings(mocker: MockerFixture, async_client: AsyncClient,
 
 
 async def test_search_settings__search_for_settings_of_a_non_existing_service__return_empty_list(
-    async_client: AsyncClient, db: Database, setting_data
+    async_client: AsyncClient, db_conn: SAConnection, setting_data
 ):
     # arrange
-    await create_setting(db, setting_data)
+    await create_setting(db_conn, setting_data)
 
     # act
     resp = await async_client.post('/setting/search', json={'search_params': {'service_name': 'other'}})
@@ -231,9 +235,11 @@ async def test_search_settings__search_for_settings_of_a_non_existing_service__r
     assert resp_data == []
 
 
-async def test_get_all_service_settings(mocker: MockerFixture, async_client: AsyncClient, db: Database, setting_data):
+async def test_get_all_service_settings(
+    mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data
+):
     # arrange
-    await create_setting(db, setting_data)
+    await create_setting(db_conn, setting_data)
     service_name = setting_data["service_name"]
 
     # act
@@ -253,12 +259,12 @@ async def test_get_all_service_settings(mocker: MockerFixture, async_client: Asy
 
 
 async def test_get_all_service_settings__use_custom_limit_and_offset(
-    async_client: AsyncClient, db: Database, setting_data
+    async_client: AsyncClient, db_conn: SAConnection, setting_data
 ):
     # arrange
     service_name = setting_data["service_name"]
     for name in ('timeout', 'timeout1', 'timeout2', 'timeout3'):
-        await create_setting(db, {**setting_data, 'name': name})
+        await create_setting(db_conn, {**setting_data, 'name': name})
 
     # act
     resp = await async_client.post(f'/setting/all/{service_name}', json={'offset': 0, 'limit': 2})
@@ -275,9 +281,9 @@ async def test_get_all_service_settings__use_custom_limit_and_offset(
     assert [i['name'] for i in resp1_data] == ['timeout2', 'timeout3']
 
 
-async def test_get_service_settings(async_client: AsyncClient, db: Database, setting_data):
+async def test_get_service_settings(async_client: AsyncClient, db_conn: SAConnection, setting_data):
     # arrange
-    await create_setting(db, setting_data)
+    await create_setting(db_conn, setting_data)
     url = f'/get_settings/{setting_data["service_name"]}'
 
     # act
