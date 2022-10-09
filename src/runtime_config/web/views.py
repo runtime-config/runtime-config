@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from runtime_config.enums.status import ResponseStatus
 from runtime_config.lib.db import get_db_conn
 from runtime_config.repositories.db import repo as db_repo
-from runtime_config.repositories.db.entities import SettingData
+from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
 from runtime_config.web.entities import (
     CreateNewSettingRequest,
     EditSettingRequest,
@@ -87,9 +87,12 @@ async def edit_setting(
 async def get_setting(
     setting_id: int, include_history: bool = False, db_conn: SAConnection = Depends(get_db_conn)
 ) -> GetSettingResponse:
+    change_history: list[SettingHistoryData] | None
     found_setting, change_history = await db_repo.get_setting(
         conn=db_conn, setting_id=setting_id, include_history=include_history
     )
+    if not include_history:
+        change_history = None
     return GetSettingResponse(setting=found_setting, change_history=change_history)
 
 

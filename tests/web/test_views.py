@@ -158,7 +158,7 @@ async def test_get_setting(mocker: MockerFixture, async_client: AsyncClient, db_
         },
     }
     expected_resp = copy.deepcopy(expected_resp_with_history)
-    expected_resp['change_history'] = []
+    expected_resp['change_history'] = None
 
     # act
     resp = await async_client.get(f'/setting/get/{created["id"]}')
@@ -184,7 +184,7 @@ async def test_get_settings__getting_a_non_existent_setting__return_empty_resp(
 
     # assert
     assert resp.status_code == 200
-    assert resp_data == {'change_history': [], 'setting': None}
+    assert resp_data == {'change_history': None, 'setting': None}
 
 
 async def test_search_settings(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
