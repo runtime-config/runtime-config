@@ -25,7 +25,7 @@ class GetAllSettingsRequest(BaseModel):
 
 class GetSettingResponse(BaseModel):
     setting: SettingData | None
-    change_history: list[SettingHistoryData] = Field(default_factory=list)
+    change_history: list[SettingHistoryData] | None
 
 
 class EditSettingRequest(BaseModel):
