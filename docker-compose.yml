@@ -1,7 +1,7 @@
 services:
 
   app:
-    image: ghcr.io/aleksey925/runtime-config:latest
+    image: ghcr.io/runtime-config/runtime-config:latest
     restart: on-failure:10
     env_file:
       - .env
