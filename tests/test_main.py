@@ -4,7 +4,7 @@ from pytest_mock import MockerFixture
 from runtime_config.main import init_hooks
 
 
-def test_init_hooks(mocker: MockerFixture):
+async def test_init_hooks(mocker: MockerFixture):
     # arrange
     init_db_mock = mocker.patch('runtime_config.main.init_db')
     close_db_mock = mocker.patch('runtime_config.main.close_db')
@@ -15,7 +15,7 @@ def test_init_hooks(mocker: MockerFixture):
     init_hooks(app_mock, config_mock)
     for call in app_mock.on_event().call_args_list:
         fn = call[0][0]
-        fn(app_mock)
+        await fn(app_mock)
 
     # assert
     init_db_mock.assert_called_with(app_mock, dsn=config_mock.db_dsn)
