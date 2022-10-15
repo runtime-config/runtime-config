@@ -5,7 +5,7 @@ services:
       context: .
       args:
         - CURRENT_ENV=dev
-    image: ghcr.io/aleksey925/runtime-config:dev
+    image: runtime-config:dev
     restart: on-failure:10
     env_file:
       - .env

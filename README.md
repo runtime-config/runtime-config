@@ -1,9 +1,9 @@
-![license](https://img.shields.io/github/license/aleksey925/runtime-config?style=for-the-badge) [![version](https://img.shields.io/github/v/release/aleksey925/runtime-config?display_name=tag&style=for-the-badge)](https://github.com/aleksey925/runtime-config/pkgs/container/runtime-config) ![coverage](https://img.shields.io/codecov/c/github/aleksey925/runtime-config/master?style=for-the-badge) [![tests status](https://img.shields.io/github/workflow/status/aleksey925/runtime-config/Tests/master?style=for-the-badge)](https://github.com/aleksey925/runtime-config/actions?query=branch%3Amaster)
+![license](https://img.shields.io/github/license/runtime-config/runtime-config?style=for-the-badge) [![version](https://img.shields.io/github/v/release/runtime-config/runtime-config?display_name=tag&style=for-the-badge)](https://github.com/runtime-config/runtime-config/pkgs/container/runtime-config) [![coverage](https://img.shields.io/codecov/c/github/runtime-config/runtime-config/master?style=for-the-badge)](https://app.codecov.io/gh/runtime-config/runtime-config/) [![tests status](https://img.shields.io/github/workflow/status/runtime-config/runtime-config/Tests/master?style=for-the-badge)](https://github.com/runtime-config/runtime-config/actions?query=branch%3Amaster)
 
 runtime-config
 ==============
 
-Server for storing service settings. Together with the [client](https://github.com/aleksey925/runtime-config-py), it
+Server for storing service settings. Together with the [client](https://github.com/runtime-config/runtime-config-py), it
 allows you to change application settings at runtime.
 
 Table of contents:
@@ -42,7 +42,7 @@ INSERT INTO setting(name, value, value_type, service_name)
 VALUES ('timeout', '1', 'int', 'some-service-name');
 ```
 
-With the help of the [client](https://github.com/aleksey925/runtime-config-py), this variable can be get like this:
+With the help of the [client](https://github.com/runtime-config/runtime-config-py), this variable can be get like this:
 
 ```python
 source = ConfigServerSrc(host='http://127.0.0.1:8080', service_name='some-service-name')
@@ -57,7 +57,7 @@ INSERT INTO setting(name, value, value_type, service_name)
 VALUES ('db__timeout', '1', 'int', 'some-service-name');
 ```
 
-With the help of the [client](https://github.com/aleksey925/runtime-config-py), this variable can be get like this:
+With the help of the [client](https://github.com/runtime-config/runtime-config-py), this variable can be get like this:
 
 ```python
 source = ConfigServerSrc(host='http://127.0.0.1:8080', service_name='some-service-name')
@@ -93,7 +93,7 @@ Available variable types:
 1. Define all environment variables necessary for the service to work. You can find them in `.env.example`.
 
 2. Select a docker image with the latest version of the application. You can find docker images
-[here](https://github.com/aleksey925/runtime-config/pkgs/container/runtime-config).
+[here](https://github.com/runtime-config/runtime-config/pkgs/container/runtime-config).
 
 3. Deploy postgres.
 
