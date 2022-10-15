@@ -1,3 +1,5 @@
+import typing as t
+
 import psycopg2.errors
 from aiopg.sa import SAConnection
 from fastapi import APIRouter, Depends
@@ -124,9 +126,19 @@ async def get_all_service_settings(
 
 
 @router.get('/get_settings/{service_name}', response_model=list[GetServiceSettingsLegacyResponse], deprecated=True)
-async def get_service_settings(service_name: str, db_conn: SAConnection = Depends(get_db_conn)) -> list[SettingData]:
+async def get_service_settings(
+    service_name: str, db_conn: SAConnection = Depends(get_db_conn)
+) -> list[dict[str, t.Any]]:
     # not removed for backwards compatibility with client library
-    return [setting async for setting in db_repo.get_service_settings(conn=db_conn, service_name=service_name)]
+    def rename_fields(setting_data: SettingData) -> dict[str, t.Any]:
+        data = setting_data.dict()
+        data['disable'] = data.pop('disabled')
+        return data
+
+    return [
+        rename_fields(setting)
+        async for setting in db_repo.get_service_settings(conn=db_conn, service_name=service_name)
+    ]
 
 
 @router.get('/health-check')

@@ -11,7 +11,7 @@ class SettingData(BaseModel):
     name: str
     value: t.Any
     value_type: ValueType
-    disable: bool
+    disabled: bool
     service_name: str
     created_by_db_user: str
     updated_at: datetime.datetime
