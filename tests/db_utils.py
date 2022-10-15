@@ -13,7 +13,7 @@ async def create_setting(conn: SAConnection, value: dict[str, t.Any]) -> dict[st
 
 
 async def count_settings(conn: SAConnection) -> int:
-    query = select(func.count()).select_from(select(Setting))
+    query = select(func.count()).subquery(select(Setting))
     return (await (await conn.execute(query)).fetchone())[0]
 
 

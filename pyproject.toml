@@ -43,6 +43,11 @@ env = [
     "CURRENT_ENV=test",
 ]
 
+[tool.coverage.run]
+omit = [
+    "src/runtime_config/cli.py"
+]
+
 [tool.black]
 target_version = ['py310']
 line-length = 119
