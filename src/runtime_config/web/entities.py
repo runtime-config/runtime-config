@@ -33,7 +33,7 @@ class EditSettingRequest(BaseModel):
     name: str | None
     value: str | None
     value_type: ValueType | None
-    disable: bool | None
+    disabled: bool | None
     service_name: str | None
 
 
@@ -41,7 +41,7 @@ class CreateNewSettingRequest(BaseModel):
     name: str
     value: str
     value_type: ValueType
-    disable: bool = Field(default=False)
+    disabled: bool = Field(default=False)
     service_name: str
 
 

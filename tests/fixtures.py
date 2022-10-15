@@ -11,7 +11,7 @@ def setting_data_fixture(config):
         'name': 'timeout',
         'value': '10',
         'value_type': ValueType.int,
-        'disable': False,
+        'disabled': False,
         'service_name': 'service-name',
         'created_by_db_user': config.db_user,
     }
