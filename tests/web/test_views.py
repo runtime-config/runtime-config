@@ -136,7 +136,7 @@ async def test_get_setting(mocker: MockerFixture, async_client: AsyncClient, db_
             {
                 'created_by_db_user': 'admin',
                 'deleted_by_db_user': None,
-                'disabled': False,
+                'is_disabled': False,
                 'id': mocker.ANY,
                 'is_deleted': False,
                 'name': 'timeout',
@@ -148,7 +148,7 @@ async def test_get_setting(mocker: MockerFixture, async_client: AsyncClient, db_
         ],
         'setting': {
             'created_by_db_user': 'admin',
-            'disabled': False,
+            'is_disabled': False,
             'id': mocker.ANY,
             'name': 'timeout',
             'service_name': 'service-name',
@@ -214,7 +214,7 @@ async def test_search_settings(mocker: MockerFixture, async_client: AsyncClient,
             'value_type': setting_data['value_type'].value,
             'service_name': setting_data['service_name'],
             'created_by_db_user': 'admin',
-            'disabled': setting_data['disabled'],
+            'is_disabled': setting_data['is_disabled'],
             'updated_at': mocker.ANY,
         }
     ]
@@ -296,7 +296,7 @@ async def test_get_service_settings(async_client: AsyncClient, db_conn: SAConnec
         'name': setting_data['name'],
         'value': setting_data['value'],
         'value_type': setting_data['value_type'].value,
-        'disable': setting_data['disabled'],
+        'disable': setting_data['is_disabled'],
     }
 
 
