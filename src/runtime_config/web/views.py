@@ -132,7 +132,7 @@ async def get_service_settings(
     # not removed for backwards compatibility with client library
     def rename_fields(setting_data: SettingData) -> dict[str, t.Any]:
         data = setting_data.dict()
-        data['disable'] = data.pop('disabled')
+        data['disable'] = data.pop('is_disabled')
         return data
 
     return [
