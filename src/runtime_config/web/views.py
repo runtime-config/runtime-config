@@ -2,7 +2,7 @@ import typing as t
 
 import psycopg2.errors
 from aiopg.sa import SAConnection
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from runtime_config.enums.status import ResponseStatus
@@ -12,11 +12,9 @@ from runtime_config.repositories.db.entities import SettingData, SettingHistoryD
 from runtime_config.web.entities import (
     CreateNewSettingRequest,
     EditSettingRequest,
-    GetAllSettingsRequest,
     GetServiceSettingsLegacyResponse,
     GetSettingResponse,
     OperationStatusResponse,
-    SettingSearchRequest,
 )
 
 router = APIRouter()
@@ -98,29 +96,36 @@ async def get_setting(
     return GetSettingResponse(setting=found_setting, change_history=change_history)
 
 
-@router.post('/setting/search', response_model=list[SettingData])
+@router.get('/setting/search', response_model=list[SettingData])
 async def search_settings(
-    payload: SettingSearchRequest, db_conn: SAConnection = Depends(get_db_conn)
+    name: str | None = None,
+    service_name: str | None = None,
+    offset: int = Query(default=0, gt=-1),
+    limit: int = Query(default=30, gt=0, le=30),
+    db_conn: SAConnection = Depends(get_db_conn),
 ) -> list[SettingData]:
     return [
         setting
         async for setting in db_repo.search_settings(
-            conn=db_conn, search_params=payload.search_params, offset=payload.offset, limit=payload.limit
+            conn=db_conn, name=name, service_name=service_name, offset=offset, limit=limit
         )
     ]
 
 
-@router.post('/setting/all/{service_name}', response_model=list[SettingData])
+@router.get('/setting/all/{service_name}', response_model=list[SettingData])
 async def get_all_service_settings(
-    service_name: str, payload: GetAllSettingsRequest, db_conn: SAConnection = Depends(get_db_conn)
+    service_name: str,
+    offset: int = Query(default=0, gt=-1),
+    limit: int = Query(default=30, gt=0, le=30),
+    db_conn: SAConnection = Depends(get_db_conn),
 ) -> list[SettingData]:
     return [
         setting
         async for setting in db_repo.get_service_settings(
             conn=db_conn,
             service_name=service_name,
-            offset=payload.offset,
-            limit=payload.limit,
+            offset=offset,
+            limit=limit,
         )
     ]
 

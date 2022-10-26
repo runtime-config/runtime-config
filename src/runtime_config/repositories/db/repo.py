@@ -5,11 +5,7 @@ from sqlalchemy import delete, desc, insert, select, update
 from sqlalchemy.sql.expression import literal_column
 
 from runtime_config.models import Setting, SettingHistory
-from runtime_config.repositories.db.entities import (
-    SearchParams,
-    SettingData,
-    SettingHistoryData,
-)
+from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
 
 
 async def delete_setting(conn: SAConnection, setting_id: int) -> bool:
@@ -95,7 +91,7 @@ async def get_setting(
 
 
 async def search_settings(
-    conn: SAConnection, search_params: SearchParams, offset: int = 0, limit: int = 30
+    conn: SAConnection, name: str | None, service_name: str | None, offset: int = 0, limit: int = 30
 ) -> t.AsyncIterable[SettingData]:
     query = (
         select(
@@ -112,11 +108,11 @@ async def search_settings(
         .limit(limit)
     )
 
-    if 'name' in search_params:
-        query = query.where(Setting.name.like(f'%{search_params["name"]}%'))
+    if name is not None:
+        query = query.where(Setting.name.like(f'%{name}%'))
 
-    if 'service_name' in search_params:
-        query = query.where(Setting.service_name == search_params['service_name'])
+    if service_name is not None:
+        query = query.where(Setting.service_name == service_name)
 
     async for row in conn.execute(query):
         yield SettingData(**row)
