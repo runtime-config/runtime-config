@@ -201,7 +201,7 @@ async def test_search_settings(mocker: MockerFixture, async_client: AsyncClient,
     )
 
     # act
-    resp = await async_client.post('/setting/search', json={'search_params': {'name': 'timeou'}})
+    resp = await async_client.get('/setting/search?name=timeou')
     resp_data = resp.json()
 
     # assert
@@ -227,7 +227,7 @@ async def test_search_settings__search_for_settings_of_a_non_existing_service__r
     await create_setting(db_conn, setting_data)
 
     # act
-    resp = await async_client.post('/setting/search', json={'search_params': {'service_name': 'other'}})
+    resp = await async_client.get('/setting/search?service_name=other')
     resp_data = resp.json()
 
     # assert
@@ -243,7 +243,7 @@ async def test_get_all_service_settings(
     service_name = setting_data["service_name"]
 
     # act
-    resp = await async_client.post(f'/setting/all/{service_name}', json={})
+    resp = await async_client.get(f'/setting/all/{service_name}')
     resp_data = resp.json()
 
     # assert
@@ -267,10 +267,10 @@ async def test_get_all_service_settings__use_custom_limit_and_offset(
         await create_setting(db_conn, {**setting_data, 'name': name})
 
     # act
-    resp = await async_client.post(f'/setting/all/{service_name}', json={'offset': 0, 'limit': 2})
+    resp = await async_client.get(f'/setting/all/{service_name}?offset=0&limit=2')
     resp_data = resp.json()
 
-    resp1 = await async_client.post(f'/setting/all/{service_name}', json={'offset': 2, 'limit': 2})
+    resp1 = await async_client.get(f'/setting/all/{service_name}?offset=2&limit=2')
     resp1_data = resp1.json()
 
     # assert

@@ -5,22 +5,7 @@ from pydantic.main import BaseModel
 
 from runtime_config.enums.settings import ValueType
 from runtime_config.enums.status import ResponseStatus
-from runtime_config.repositories.db.entities import (
-    SearchParams,
-    SettingData,
-    SettingHistoryData,
-)
-
-
-class SettingSearchRequest(BaseModel):
-    offset: int = Field(gt=-1, default=0)
-    limit: int = Field(gt=0, le=30, default=30)
-    search_params: SearchParams
-
-
-class GetAllSettingsRequest(BaseModel):
-    offset: int = Field(gt=-1, default=0)
-    limit: int = Field(gt=0, le=30, default=30)
+from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
 
 
 class GetSettingResponse(BaseModel):

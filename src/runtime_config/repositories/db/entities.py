@@ -20,8 +20,3 @@ class SettingData(BaseModel):
 class SettingHistoryData(SettingData):
     is_deleted: bool
     deleted_by_db_user: str | None
-
-
-class SearchParams(t.TypedDict, total=False):
-    name: str | None
-    service_name: str | None
