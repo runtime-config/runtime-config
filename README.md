@@ -126,11 +126,14 @@ ver=0.1.0 make build-img
    ```
    # brew
    eval "$(/opt/homebrew/bin/brew shellenv)"
+   export HOMEBREW_NO_ANALYTICS=1
 
    # poetry
-   export PATH="$HOME/.poetry/bin:$PATH"
+   export PATH="$HOME/.local/bin:$PATH"
 
    # pyenv
+   export PYENV_ROOT="$HOME/.pyenv"
+   export PATH="$PYENV_ROOT/bin:$PATH"
    eval "$(pyenv init --path)"
 
    # direnv
@@ -170,7 +173,8 @@ ver=0.1.0 make build-img
 3. Install required software.
 
     ```
-    brew install wget direnv pyenv postgresql openssl
+    brew install wget direnv postgresql openssl python@3.9 xz
+    curl https://pyenv.run | bash
     ```
 
     ```
@@ -178,13 +182,12 @@ ver=0.1.0 make build-img
     ```
 
     ```
-    wget https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
-    /usr/bin/python3 ./get-poetry.py
+    curl -sSL https://install.python-poetry.org | python3.9 -
     poetry config virtualenvs.create false
     ```
 
     ```
-    pyenv install 3.10.4
+    pyenv install 3.10.8
     ```
 
 4. Disable background postgres service.
