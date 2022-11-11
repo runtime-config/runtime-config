@@ -1,14 +1,10 @@
-import sys
 from logging.config import fileConfig
-from pathlib import Path
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-# fix ModuleNotFoundError exception
-sys.path.insert(0, str(Path(__file__).absolute().parent.parent / 'src'))
-from runtime_config.config import get_config  # noqa: E402
-from runtime_config.models import Base  # noqa: E402
+from runtime_config.config import get_config
+from runtime_config.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -24,7 +20,6 @@ target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
-# my_important_option = config.get_main_option('my_important_option')
 config.set_main_option('sqlalchemy.url', str(get_config().db_dsn.replace('postgresql+aiopg', 'postgresql')))
 
 
