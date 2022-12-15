@@ -3,8 +3,6 @@ services:
   app:
     build:
       context: .
-      args:
-        - CURRENT_ENV=dev
     image: runtime-config:dev
     restart: on-failure:10
     env_file:

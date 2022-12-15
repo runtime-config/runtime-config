@@ -27,7 +27,6 @@ class LogLevel(Enum):
 class Config(BaseSettings):
     project_dir: Path = Path(__file__).absolute().parent.parent.parent
     app_dir: Path = Path(__file__).absolute().parent
-    current_env: str = Field(default='dev')
 
     log_mode: LogMode = LogMode.simple
     log_level: LogLevel = LogLevel.info
