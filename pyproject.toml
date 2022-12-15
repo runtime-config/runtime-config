@@ -14,15 +14,14 @@ pydantic = { version = "^1.10.1", extras = ["dotenv"] }
 aiopg = "^1.4.0"
 psycopg2 = "^2.9.5"
 types-psycopg2 = "^2.9.21"
-SQLAlchemy = { extras = ["mypy"], version = "^1.4.44" }
+SQLAlchemy = { extras = ["mypy"], version = "^1.4.45" }
 alembic = "^1.8.1"
-structlog = "^22.1.0"
+structlog = "^22.3.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.0"
 pytest-asyncio = "^0.18.3"
 pytest-mock = "^3.10.0"
-pytest-env = "^0.6.2"
 pytest-cov = "^3.0.0"
 autopep8 = "1.6.0"
 black = "22.8.0"
@@ -30,7 +29,7 @@ flake8 = "4.0.1"
 isort = "5.10.1"
 mypy = "0.971"
 pre-commit = "^2.19.0"
-httpx = "^0.23.0"
+httpx = "^0.23.1"
 
 [tool.poetry.scripts]
 runtime-config = "runtime_config.cli:cli"
@@ -39,9 +38,6 @@ runtime-config = "runtime_config.cli:cli"
 asyncio_mode = "auto"
 pythonpath = ['./src']
 testpaths = ["tests"]
-env = [
-    "CURRENT_ENV=test",
-]
 
 [tool.coverage.run]
 omit = [

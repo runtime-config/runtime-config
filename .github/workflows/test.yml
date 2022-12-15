@@ -1,4 +1,4 @@
-name: Tests
+name: test
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
       - 'master'
 
 env:
-  POETRY_VERSION: "1.1.13"
+  POETRY_VERSION: "1.2.2"
   MIN_COVERAGE: "95"
   # app envs
   DB_USER: "admin"
@@ -28,9 +28,8 @@ jobs:
           python-version: "3.10"
       - name: Install poetry
         run: |
-          wget https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
-          python ./get-poetry.py --version $POETRY_VERSION
-          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+          curl -sSL https://install.python-poetry.org | POETRY_VERSION=$POETRY_VERSION python3
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       - name: Install dependencies
         run: poetry install
         env:
@@ -66,9 +65,8 @@ jobs:
           python-version: "3.10"
       - name: Install poetry
         run: |
-          wget https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
-          python ./get-poetry.py --version $POETRY_VERSION
-          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+          curl -sSL https://install.python-poetry.org | POETRY_VERSION=$POETRY_VERSION python3
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       - name: Install dependencies
         run: poetry install
         env:
