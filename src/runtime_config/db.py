@@ -1,10 +1,11 @@
+import contextlib
 import typing as t
 
 from aiopg.sa import Engine, SAConnection, create_engine
 from pydantic.networks import PostgresDsn
 from structlog import get_logger
 
-from runtime_config.lib.exception import ServiceInstanceNotFound
+from runtime_config.exception import ServiceInstanceNotFound
 
 logger = get_logger(__name__)
 
@@ -18,7 +19,8 @@ def get_db() -> Engine:
         raise ServiceInstanceNotFound('db')
 
 
-async def get_db_conn() -> t.AsyncIterable[SAConnection]:
+@contextlib.asynccontextmanager
+async def get_db_conn() -> t.AsyncIterator[SAConnection]:
     async with get_db().acquire() as conn:
         yield conn
 

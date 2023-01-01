@@ -2,11 +2,10 @@ import typing as t
 
 import psycopg2.errors
 from aiopg.sa import SAConnection
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
 
 from runtime_config.enums.status import ResponseStatus
-from runtime_config.lib.db import get_db_conn
 from runtime_config.repositories.db import repo as db_repo
 from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
 from runtime_config.web.entities import (
@@ -22,8 +21,10 @@ router = APIRouter()
 
 @router.post('/setting/create', response_model=SettingData, responses={400: {'model': OperationStatusResponse}})
 async def create_setting(
-    payload: CreateNewSettingRequest, db_conn: SAConnection = Depends(get_db_conn)
+    request: Request,
+    payload: CreateNewSettingRequest,
 ) -> SettingData | JSONResponse:
+    db_conn: SAConnection = request.state.db_conn
     response: SettingData | JSONResponse
     try:
         created_setting = await db_repo.create_new_setting(conn=db_conn, values=payload.dict())
@@ -50,8 +51,10 @@ async def create_setting(
     responses={400: {'model': OperationStatusResponse}},
 )
 async def delete_setting(
-    setting_id: int, db_conn: SAConnection = Depends(get_db_conn)
+    request: Request,
+    setting_id: int,
 ) -> OperationStatusResponse | JSONResponse:
+    db_conn: SAConnection = request.state.db_conn
     if await db_repo.delete_setting(conn=db_conn, setting_id=setting_id):
         return {'status': ResponseStatus.success}
     else:
@@ -66,8 +69,10 @@ async def delete_setting(
 
 @router.post('/setting/edit', response_model=SettingData, responses={400: {'model': OperationStatusResponse}})
 async def edit_setting(
-    payload: EditSettingRequest, db_conn: SAConnection = Depends(get_db_conn)
+    request: Request,
+    payload: EditSettingRequest,
 ) -> SettingData | JSONResponse:
+    db_conn: SAConnection = request.state.db_conn
     response: SettingData | JSONResponse
     edited_setting = await db_repo.edit_setting(
         conn=db_conn, setting_id=payload.id, values=payload.dict(exclude={'id'}, exclude_unset=True)
@@ -85,8 +90,11 @@ async def edit_setting(
 
 @router.get('/setting/get/{setting_id}', response_model=GetSettingResponse)
 async def get_setting(
-    setting_id: int, include_history: bool = False, db_conn: SAConnection = Depends(get_db_conn)
+    request: Request,
+    setting_id: int,
+    include_history: bool = False,
 ) -> GetSettingResponse:
+    db_conn: SAConnection = request.state.db_conn
     change_history: list[SettingHistoryData] | None
     found_setting, change_history = await db_repo.get_setting(
         conn=db_conn, setting_id=setting_id, include_history=include_history
@@ -98,12 +106,13 @@ async def get_setting(
 
 @router.get('/setting/search', response_model=list[SettingData])
 async def search_settings(
+    request: Request,
     name: str | None = None,
     service_name: str | None = None,
     offset: int = Query(default=0, gt=-1),
     limit: int = Query(default=30, gt=0, le=30),
-    db_conn: SAConnection = Depends(get_db_conn),
 ) -> list[SettingData]:
+    db_conn: SAConnection = request.state.db_conn
     return [
         setting
         async for setting in db_repo.search_settings(
@@ -114,11 +123,12 @@ async def search_settings(
 
 @router.get('/setting/all/{service_name}', response_model=list[SettingData])
 async def get_all_service_settings(
+    request: Request,
     service_name: str,
     offset: int = Query(default=0, gt=-1),
     limit: int = Query(default=30, gt=0, le=30),
-    db_conn: SAConnection = Depends(get_db_conn),
 ) -> list[SettingData]:
+    db_conn: SAConnection = request.state.db_conn
     return [
         setting
         async for setting in db_repo.get_service_settings(
@@ -131,10 +141,10 @@ async def get_all_service_settings(
 
 
 @router.get('/get_settings/{service_name}', response_model=list[GetServiceSettingsLegacyResponse], deprecated=True)
-async def get_service_settings(
-    service_name: str, db_conn: SAConnection = Depends(get_db_conn)
-) -> list[dict[str, t.Any]]:
+async def get_service_settings(request: Request, service_name: str) -> list[dict[str, t.Any]]:
     # not removed for backwards compatibility with client library
+    db_conn: SAConnection = request.state.db_conn
+
     def rename_fields(setting_data: SettingData) -> dict[str, t.Any]:
         data = setting_data.dict()
         data['disable'] = data.pop('is_disabled')

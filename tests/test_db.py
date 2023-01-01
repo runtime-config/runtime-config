@@ -2,9 +2,9 @@ import pytest
 from aiopg.sa import Engine
 from pytest_mock import MockerFixture
 
-import runtime_config.lib.db as db_module
-from runtime_config.lib.db import close_db, get_db, get_db_conn
-from runtime_config.lib.exception import ServiceInstanceNotFound
+import runtime_config.db as db_module
+from runtime_config.db import close_db, get_db, get_db_conn
+from runtime_config.exception import ServiceInstanceNotFound
 
 
 def test_get_db(mocker: MockerFixture):
@@ -21,7 +21,8 @@ def test_get_db(mocker: MockerFixture):
 
 async def test_get_db_conn(db_mock):
     # act
-    conn = await anext(get_db_conn())
+    async with get_db_conn() as conn:
+        pass
 
     # arrange
     assert conn == await db_mock.acquire().__aenter__()
@@ -47,7 +48,7 @@ async def test_close_db(db_mock):
 
 async def test_close_db__db_engine_instance_was_not_created__success(mocker: MockerFixture):
     # arrange
-    mocker.patch('runtime_config.lib.db.get_db', side_effect=ServiceInstanceNotFound('db'))
+    mocker.patch('runtime_config.db.get_db', side_effect=ServiceInstanceNotFound('db'))
 
     # act && assert
     await close_db()

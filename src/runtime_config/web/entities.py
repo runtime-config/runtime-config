@@ -35,10 +35,6 @@ class OperationStatusResponse(t.TypedDict, total=False):
     message: str
 
 
-class DeleteSettingResponse(OperationStatusResponse):
-    pass
-
-
 class GetServiceSettingsLegacyResponse(BaseModel):
     name: str
     value: t.Any

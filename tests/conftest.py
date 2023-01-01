@@ -6,9 +6,10 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 
 from runtime_config.config import Config, get_config
-from runtime_config.lib.db import close_db, get_db_conn, init_db
+from runtime_config.db import close_db, init_db
 from runtime_config.lib.db_utils import apply_migrations, create_db, drop_db
-from runtime_config.main import app_factory
+from runtime_config.main import app_factory, get_middleware
+from runtime_config.middleware import db_conn_middleware
 from tests.fixtures import *  # noqa: F403, F401
 
 
@@ -49,8 +50,8 @@ async def db_conn_fixture(db: Engine) -> t.AsyncGenerator[SAConnection, None]:
 
 @pytest.fixture(name='app')
 async def app_fixture(config: Config, db_conn: SAConnection) -> t.AsyncGenerator[FastAPI, None]:
-    app = app_factory(app_hooks=lambda *args, **kwargs: None)
-    app.dependency_overrides[get_db_conn] = lambda: db_conn
+    middleware = mock_middleware(get_middleware(), db_conn)
+    app = app_factory(app_hooks=lambda *args, **kwargs: None, middleware=middleware)
     yield app
 
 
@@ -58,3 +59,16 @@ async def app_fixture(config: Config, db_conn: SAConnection) -> t.AsyncGenerator
 async def async_client(app: FastAPI) -> t.AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
+
+
+def get_db_conn_middleware_mock(db_conn):
+    async def middleware(request, call_next):
+        request.state.db_conn = db_conn
+        return await call_next(request)
+
+    return middleware
+
+
+def mock_middleware(original_middleware, db_conn):
+    mapping = {db_conn_middleware: get_db_conn_middleware_mock(db_conn)}
+    return [mapping.get(func, func) for func in original_middleware]
