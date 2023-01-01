@@ -7,9 +7,11 @@ from httpx import AsyncClient
 
 from runtime_config.config import Config, get_config
 from runtime_config.db import close_db, init_db
+from runtime_config.enums.user import UserRole
 from runtime_config.lib.db_utils import apply_migrations, create_db, drop_db
 from runtime_config.main import app_factory, get_middleware
 from runtime_config.middleware import db_conn_middleware
+from runtime_config.repositories.db.repo import create_user
 from tests.fixtures import *  # noqa: F403, F401
 
 
@@ -56,9 +58,24 @@ async def app_fixture(config: Config, db_conn: SAConnection) -> t.AsyncGenerator
 
 
 @pytest.fixture
-async def async_client(app: FastAPI) -> t.AsyncGenerator[AsyncClient, None]:
-    async with AsyncClient(app=app, base_url="http://test") as client:
+async def async_client(app: FastAPI, admin_user) -> t.AsyncGenerator[AsyncClient, None]:
+    token = app.state.jwt_token_service._create_access_token(admin_user)
+    async with AsyncClient(app=app, base_url="http://test", headers={'Authorization': f'Bearer {token}'}) as client:
         yield client
+
+
+@pytest.fixture(name='admin_user')
+async def admin_user_fixture(db_conn: SAConnection):
+    return await create_user(
+        conn=db_conn,
+        data={
+            'username': 'alex',
+            'email': 'alex@mail.ru',
+            'password': 'qwerty',
+            'role': UserRole.admin,
+            'is_active': True,
+        },
+    )
 
 
 def get_db_conn_middleware_mock(db_conn):

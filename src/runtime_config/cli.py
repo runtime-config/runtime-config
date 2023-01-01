@@ -1,5 +1,11 @@
+import asyncio
+
 import click
 import uvicorn
+
+from runtime_config.services.account.create_admin_cmd import (
+    create_admin as create_admin_cmd,
+)
 
 
 @click.group()
@@ -23,6 +29,11 @@ def serve(host: str, port: int, reload: bool, workers: int | None, access_log: b
         log_config={'version': 1, 'disable_existing_loggers': False},
         access_log=access_log,
     )
+
+
+@cli.command()
+def create_admin() -> None:
+    asyncio.run(create_admin_cmd())
 
 
 if __name__ == '__main__':

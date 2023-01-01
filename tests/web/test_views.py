@@ -281,25 +281,6 @@ async def test_get_all_service_settings__use_custom_limit_and_offset(
     assert [i['name'] for i in resp1_data] == ['timeout2', 'timeout3']
 
 
-async def test_get_service_settings(async_client: AsyncClient, db_conn: SAConnection, setting_data):
-    # arrange
-    await create_setting(db_conn, setting_data)
-    url = f'/get_settings/{setting_data["service_name"]}'
-
-    # act
-    resp = await async_client.get(url)
-    resp_data = resp.json()
-
-    # assert
-    assert len(resp_data) == 1
-    assert resp_data[0] == {
-        'name': setting_data['name'],
-        'value': setting_data['value'],
-        'value_type': setting_data['value_type'].value,
-        'disable': setting_data['is_disabled'],
-    }
-
-
 async def test_health_check(async_client, db, setting_data):
     # act
     resp = await async_client.get('/health-check')

@@ -3,8 +3,16 @@ import typing as t
 from aiopg.sa import SAConnection
 from sqlalchemy import delete, desc, insert, select, update
 
+from runtime_config.enums.token import TokenType
 from runtime_config.models import Setting, SettingHistory
-from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
+from runtime_config.models import Token as TokenModel
+from runtime_config.models import User as UserModel
+from runtime_config.repositories.db.entities import (
+    SettingData,
+    SettingHistoryData,
+    Token,
+    User,
+)
 
 
 async def delete_setting(conn: SAConnection, setting_id: int) -> bool:
@@ -80,3 +88,32 @@ async def get_service_settings(
 
     async for row in conn.execute(query):
         yield SettingData(**row)
+
+
+async def create_user(conn: SAConnection, data: dict[str, t.Any]) -> User:
+    query = insert(UserModel).values(data).returning(UserModel)
+    row = await (await conn.execute(query)).fetchone()
+    return User(**row)
+
+
+async def get_user(conn: SAConnection, username: str) -> User | None:
+    query = select(UserModel).where(UserModel.username == username)
+    user = await (await conn.execute(query)).fetchone()
+    return User(**user) if user else None
+
+
+async def get_user_refresh_token(conn: SAConnection, refresh_token: str, user_id: int) -> Token | None:
+    query = select(TokenModel).where(
+        TokenModel.user_id == user_id, TokenModel.token == refresh_token, TokenModel.type == TokenType.refresh
+    )
+    token = await (await conn.execute(query)).fetchone()
+    return Token(**token) if token else None
+
+
+async def delete_user_refresh_token(conn: SAConnection, user_id: int) -> None:
+    await conn.execute(delete(TokenModel).where(TokenModel.user_id == user_id))
+
+
+async def update_refresh_token(conn: SAConnection, new_token: str, user_id: int) -> None:
+    await delete_user_refresh_token(conn=conn, user_id=user_id)
+    await conn.execute(insert(TokenModel).values({'user_id': user_id, 'token': new_token, 'type': TokenType.refresh}))

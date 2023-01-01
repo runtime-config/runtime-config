@@ -1,25 +1,91 @@
-import typing as t
-
 import psycopg2.errors
 from aiopg.sa import SAConnection
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
 
 from runtime_config.enums.status import ResponseStatus
 from runtime_config.repositories.db import repo as db_repo
 from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
+from runtime_config.repositories.db.repo import delete_user_refresh_token
+from runtime_config.services.account.security import JwtTokenService, authenticate_user
+from runtime_config.services_web.security import only_authorized_user
 from runtime_config.web.entities import (
     CreateNewSettingRequest,
     EditSettingRequest,
-    GetServiceSettingsLegacyResponse,
     GetSettingResponse,
+    HttpExceptionResponse,
+    OAuth2PasswordRequest,
+    OAuth2RefreshTokenRequest,
     OperationStatusResponse,
+    TokenResponse,
 )
 
 router = APIRouter()
 
 
-@router.post('/setting/create', response_model=SettingData, responses={400: {'model': OperationStatusResponse}})
+@router.post(
+    '/token',
+    response_model=TokenResponse,
+    responses={401: {'model': HttpExceptionResponse}},
+)
+async def get_pair_tokens(
+    request: Request,
+    payload: OAuth2PasswordRequest,
+) -> dict[str, str]:
+    db_conn: SAConnection = request.state.db_conn
+    jwt_token_service: JwtTokenService = request.app.state.jwt_token_service
+    user = await authenticate_user(db_conn=db_conn, username=payload.username, password=payload.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Incorrect username or password',
+            headers={'WWW-Authenticate': 'Bearer'},
+        )
+    access_token, refresh_token = await jwt_token_service.create_token_pair(db_conn=db_conn, user=user)
+    return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': 'bearer'}
+
+
+@router.post(
+    '/refresh-token',
+    response_model=TokenResponse,
+    responses={401: {'model': HttpExceptionResponse}},
+)
+async def update_tokens(
+    request: Request,
+    payload: OAuth2RefreshTokenRequest,
+) -> dict[str, str]:
+    db_conn: SAConnection = request.state.db_conn
+    jwt_token_service: JwtTokenService = request.app.state.jwt_token_service
+
+    access_token, refresh_token = await jwt_token_service.refresh_token_pair(
+        db_conn=db_conn, refresh_token=payload.refresh_token
+    )
+    if access_token is None or refresh_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Not valid refresh token',
+        )
+
+    return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': 'bearer'}
+
+
+@router.get(
+    '/logout',
+    response_model=OperationStatusResponse,
+    responses={401: {'model': HttpExceptionResponse}},
+)
+@only_authorized_user
+async def logout(request: Request) -> OperationStatusResponse:
+    await delete_user_refresh_token(conn=request.state.db_conn, user_id=request.state.user.id)
+    return {'status': ResponseStatus.success}
+
+
+@router.post(
+    '/setting/create',
+    response_model=SettingData,
+    responses={400: {'model': OperationStatusResponse}, 401: {'model': HttpExceptionResponse}},
+)
+@only_authorized_user
 async def create_setting(
     request: Request,
     payload: CreateNewSettingRequest,
@@ -48,8 +114,9 @@ async def create_setting(
 @router.get(
     '/setting/delete/{setting_id}',
     response_model=OperationStatusResponse,
-    responses={400: {'model': OperationStatusResponse}},
+    responses={400: {'model': OperationStatusResponse}, 401: {'model': HttpExceptionResponse}},
 )
+@only_authorized_user
 async def delete_setting(
     request: Request,
     setting_id: int,
@@ -67,7 +134,12 @@ async def delete_setting(
         )
 
 
-@router.post('/setting/edit', response_model=SettingData, responses={400: {'model': OperationStatusResponse}})
+@router.post(
+    '/setting/edit',
+    response_model=SettingData,
+    responses={400: {'model': OperationStatusResponse}, 401: {'model': HttpExceptionResponse}},
+)
+@only_authorized_user
 async def edit_setting(
     request: Request,
     payload: EditSettingRequest,
@@ -88,7 +160,10 @@ async def edit_setting(
     return response
 
 
-@router.get('/setting/get/{setting_id}', response_model=GetSettingResponse)
+@router.get(
+    '/setting/get/{setting_id}', response_model=GetSettingResponse, responses={401: {'model': HttpExceptionResponse}}
+)
+@only_authorized_user
 async def get_setting(
     request: Request,
     setting_id: int,
@@ -104,7 +179,8 @@ async def get_setting(
     return GetSettingResponse(setting=found_setting, change_history=change_history)
 
 
-@router.get('/setting/search', response_model=list[SettingData])
+@router.get('/setting/search', response_model=list[SettingData], responses={401: {'model': HttpExceptionResponse}})
+@only_authorized_user
 async def search_settings(
     request: Request,
     name: str | None = None,
@@ -121,7 +197,10 @@ async def search_settings(
     ]
 
 
-@router.get('/setting/all/{service_name}', response_model=list[SettingData])
+@router.get(
+    '/setting/all/{service_name}', response_model=list[SettingData], responses={401: {'model': HttpExceptionResponse}}
+)
+@only_authorized_user
 async def get_all_service_settings(
     request: Request,
     service_name: str,
@@ -137,22 +216,6 @@ async def get_all_service_settings(
             offset=offset,
             limit=limit,
         )
-    ]
-
-
-@router.get('/get_settings/{service_name}', response_model=list[GetServiceSettingsLegacyResponse], deprecated=True)
-async def get_service_settings(request: Request, service_name: str) -> list[dict[str, t.Any]]:
-    # not removed for backwards compatibility with client library
-    db_conn: SAConnection = request.state.db_conn
-
-    def rename_fields(setting_data: SettingData) -> dict[str, t.Any]:
-        data = setting_data.dict()
-        data['disable'] = data.pop('is_disabled')
-        return data
-
-    return [
-        rename_fields(setting)
-        async for setting in db_repo.get_service_settings(conn=db_conn, service_name=service_name)
     ]
 
 

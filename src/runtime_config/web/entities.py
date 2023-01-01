@@ -8,6 +8,25 @@ from runtime_config.enums.status import ResponseStatus
 from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
 
 
+class OAuth2PasswordRequest(BaseModel):
+    username: str
+    password: str
+
+
+class OAuth2RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+
+class HttpExceptionResponse(BaseModel):
+    detail: str
+
+
 class GetSettingResponse(BaseModel):
     setting: SettingData | None
     change_history: list[SettingHistoryData] | None

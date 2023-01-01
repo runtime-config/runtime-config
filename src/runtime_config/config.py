@@ -28,8 +28,13 @@ class Config(BaseSettings):
     project_dir: Path = Path(__file__).absolute().parent.parent.parent
     app_dir: Path = Path(__file__).absolute().parent
 
+    secret_key: str = Field(min_length=50)
     log_mode: LogMode = LogMode.simple
     log_level: LogLevel = LogLevel.info
+
+    jwt_token_algorithm: str = Field(default='HS256')
+    jwt_access_token_expire_time: int
+    jwt_refresh_token_expire_time: int
 
     # db
     db_host: str = Field(default='db')
