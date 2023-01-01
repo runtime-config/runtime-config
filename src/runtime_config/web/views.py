@@ -1,7 +1,6 @@
 import psycopg2.errors
 from aiopg.sa import SAConnection
 from fastapi import APIRouter, HTTPException, Query, Request, status
-from fastapi.responses import JSONResponse
 
 from runtime_config.enums.status import ResponseStatus
 from runtime_config.repositories.db import repo as db_repo
@@ -83,81 +82,72 @@ async def logout(request: Request) -> OperationStatusResponse:
 @router.post(
     '/setting/create',
     response_model=SettingData,
-    responses={400: {'model': OperationStatusResponse}, 401: {'model': HttpExceptionResponse}},
+    responses={400: {'model': HttpExceptionResponse}, 401: {'model': HttpExceptionResponse}},
 )
 @only_authorized_user
 async def create_setting(
     request: Request,
     payload: CreateNewSettingRequest,
-) -> SettingData | JSONResponse:
+) -> SettingData:
     db_conn: SAConnection = request.state.db_conn
-    response: SettingData | JSONResponse
     try:
         created_setting = await db_repo.create_new_setting(conn=db_conn, values=payload.dict())
     except psycopg2.errors.UniqueViolation:
-        response = JSONResponse(
-            content={'status': ResponseStatus.error.value, 'message': 'Variable with the same name already exists'},
-            status_code=400,
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Variable with the same name already exists',
         )
-    else:
-        if created_setting:
-            response = created_setting
-        else:
-            response = JSONResponse(
-                content={'status': ResponseStatus.error.value, 'message': 'Failed to create new setting'},
-                status_code=400,
-            )
 
-    return response
+    if not created_setting:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Failed to create new setting',
+        )
+
+    return created_setting
 
 
 @router.get(
     '/setting/delete/{setting_id}',
     response_model=OperationStatusResponse,
-    responses={400: {'model': OperationStatusResponse}, 401: {'model': HttpExceptionResponse}},
+    responses={400: {'model': HttpExceptionResponse}, 401: {'model': HttpExceptionResponse}},
 )
 @only_authorized_user
 async def delete_setting(
     request: Request,
     setting_id: int,
-) -> OperationStatusResponse | JSONResponse:
+) -> OperationStatusResponse:
     db_conn: SAConnection = request.state.db_conn
-    if await db_repo.delete_setting(conn=db_conn, setting_id=setting_id):
-        return {'status': ResponseStatus.success}
-    else:
-        return JSONResponse(
-            content={
-                'status': ResponseStatus.error.value,
-                'message': 'Could not find the setting with the specified id',
-            },
-            status_code=400,
+    if not await db_repo.delete_setting(conn=db_conn, setting_id=setting_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not find the setting with the specified id',
         )
+
+    return {'status': ResponseStatus.success}
 
 
 @router.post(
     '/setting/edit',
     response_model=SettingData,
-    responses={400: {'model': OperationStatusResponse}, 401: {'model': HttpExceptionResponse}},
+    responses={400: {'model': HttpExceptionResponse}, 401: {'model': HttpExceptionResponse}},
 )
 @only_authorized_user
 async def edit_setting(
     request: Request,
     payload: EditSettingRequest,
-) -> SettingData | JSONResponse:
+) -> SettingData:
     db_conn: SAConnection = request.state.db_conn
-    response: SettingData | JSONResponse
     edited_setting = await db_repo.edit_setting(
         conn=db_conn, setting_id=payload.id, values=payload.dict(exclude={'id'}, exclude_unset=True)
     )
-    if edited_setting:
-        response = edited_setting
-    else:
-        response = JSONResponse(
-            content={'status': ResponseStatus.error.value, 'message': 'Setting with the specified id was not found'},
-            status_code=400,
+    if not edited_setting:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Setting with the specified id was not found',
         )
 
-    return response
+    return edited_setting
 
 
 @router.get(

@@ -36,7 +36,7 @@ async def test_create_setting(mocker: MockerFixture, async_client: AsyncClient, 
         **expected_setting,
     }
     assert resp_second.status_code == 400
-    assert resp_second_data == {'status': 'error', 'message': 'Variable with the same name already exists'}
+    assert resp_second_data == {'detail': 'Variable with the same name already exists'}
 
 
 async def test_create_setting__raise_unexpected_exc__return_400(
@@ -55,7 +55,7 @@ async def test_create_setting__raise_unexpected_exc__return_400(
 
     # assert
     assert resp.status_code == 400
-    assert resp_data == {'status': 'error', 'message': 'Failed to create new setting'}
+    assert resp_data == {'detail': 'Failed to create new setting'}
 
 
 async def test_delete_setting(async_client: AsyncClient, db_conn: SAConnection, setting_data):
@@ -85,7 +85,7 @@ async def test_delete_setting__setting_not_found__return_400(
 
     # assert
     assert resp.status_code == 400
-    assert resp_data == {'status': 'error', 'message': 'Could not find the setting with the specified id'}
+    assert resp_data == {'detail': 'Could not find the setting with the specified id'}
 
 
 async def test_edit_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
@@ -124,7 +124,7 @@ async def test_edit_setting__setting_not_found__return_400(
 
     # assert
     assert resp.status_code == 400
-    assert resp_data == {'status': 'error', 'message': 'Setting with the specified id was not found'}
+    assert resp_data == {'detail': 'Setting with the specified id was not found'}
 
 
 async def test_get_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
