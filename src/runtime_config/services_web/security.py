@@ -16,7 +16,7 @@ def only_authorized_user(func: t.Callable[P, t.Awaitable[T]]) -> t.Callable[P, t
         request: Request = t.cast(Request, kwargs.get('request'))
         assert isinstance(request, Request)
 
-        user: User = request.state.user
+        user: User | None = request.state.user
         exception_params: dict[str, t.Any] = {
             'status_code': status.HTTP_401_UNAUTHORIZED,
             'headers': {'WWW-Authenticate': 'Bearer'},

@@ -68,7 +68,7 @@ async def async_client(app: FastAPI, admin_user) -> t.AsyncGenerator[AsyncClient
 async def admin_user_fixture(db_conn: SAConnection):
     return await create_user(
         conn=db_conn,
-        data={
+        values={
             'username': 'alex',
             'email': 'alex@mail.ru',
             'password': 'qwerty',

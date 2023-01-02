@@ -1,29 +1,62 @@
+import typing as t
+
 import psycopg2.errors
 from aiopg.sa import SAConnection
 from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from runtime_config.enums.status import ResponseStatus
+from runtime_config.enums.user import UserRole
 from runtime_config.repositories.db import repo as db_repo
-from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
+from runtime_config.repositories.db.entities import (
+    SettingData,
+    SettingHistoryData,
+    User,
+)
 from runtime_config.repositories.db.repo import delete_user_refresh_token
 from runtime_config.services.account.security import JwtTokenService, authenticate_user
-from runtime_config.services_web.security import only_authorized_user
+from runtime_config.services.account.user import create_new_user, create_simple_user
+from runtime_config.services_web.security import only_admin_user, only_authorized_user
 from runtime_config.web.entities import (
     CreateNewSettingRequest,
+    CreateUserRequest,
     EditSettingRequest,
+    EditUserRequest,
     GetSettingResponse,
+    GetUserResponse,
     HttpExceptionResponse,
     OAuth2PasswordRequest,
     OAuth2RefreshTokenRequest,
     OperationStatusResponse,
+    SignUpRequest,
     TokenResponse,
+    UserResponse,
 )
 
 router = APIRouter()
 
 
 @router.post(
-    '/token',
+    '/account/sign-up',
+    response_model=OperationStatusResponse,
+    responses={400: {'model': HttpExceptionResponse}},
+)
+async def sign_up(
+    request: Request,
+    payload: SignUpRequest,
+) -> dict[str, t.Any]:
+    db_conn: SAConnection = request.state.db_conn
+    try:
+        await create_simple_user(conn=db_conn, values=payload.dict())
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+    return {'status': ResponseStatus.success}
+
+
+@router.post(
+    '/account/token',
     response_model=TokenResponse,
     responses={401: {'model': HttpExceptionResponse}},
 )
@@ -45,7 +78,7 @@ async def get_pair_tokens(
 
 
 @router.post(
-    '/refresh-token',
+    '/account/refresh-token',
     response_model=TokenResponse,
     responses={401: {'model': HttpExceptionResponse}},
 )
@@ -69,7 +102,7 @@ async def update_tokens(
 
 
 @router.get(
-    '/logout',
+    '/account/logout',
     response_model=OperationStatusResponse,
     responses={401: {'model': HttpExceptionResponse}},
 )
@@ -77,6 +110,139 @@ async def update_tokens(
 async def logout(request: Request) -> OperationStatusResponse:
     await delete_user_refresh_token(conn=request.state.db_conn, user_id=request.state.user.id)
     return {'status': ResponseStatus.success}
+
+
+@router.post(
+    '/user/create',
+    response_model=UserResponse,
+    responses={
+        400: {'model': HttpExceptionResponse},
+        401: {'model': HttpExceptionResponse},
+    },
+)
+@only_authorized_user
+@only_admin_user
+async def create_user(
+    request: Request,
+    payload: CreateUserRequest,
+) -> User:
+    db_conn: SAConnection = request.state.db_conn
+    try:
+        created_user = await create_new_user(conn=db_conn, values=payload.dict())
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+
+    return created_user
+
+
+@router.get(
+    '/user/delete/{user_id}/',
+    response_model=OperationStatusResponse,
+    responses={
+        400: {'model': HttpExceptionResponse},
+        401: {'model': HttpExceptionResponse},
+    },
+)
+@only_authorized_user
+@only_admin_user
+async def delete_user(request: Request, user_id: int) -> OperationStatusResponse:
+    db_conn: SAConnection = request.state.db_conn
+    if not await db_repo.delete_user(conn=db_conn, user_id=user_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not find the user with the specified id',
+        )
+
+    return {'status': ResponseStatus.success}
+
+
+@router.post(
+    '/user/edit',
+    response_model=UserResponse,
+    responses={
+        400: {'model': HttpExceptionResponse},
+        401: {'model': HttpExceptionResponse},
+    },
+)
+@only_authorized_user
+@only_admin_user
+async def edit_user(
+    request: Request,
+    payload: EditUserRequest,
+) -> User:
+    db_conn: SAConnection = request.state.db_conn
+    edited_user = await db_repo.edit_user(
+        conn=db_conn, user_id=payload.id, values=payload.dict(exclude={'id'}, exclude_unset=True)
+    )
+    if not edited_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='User with the specified id was not found',
+        )
+
+    return edited_user
+
+
+@router.get(
+    '/user/get/{user_id}',
+    response_model=GetUserResponse,
+    responses={401: {'model': HttpExceptionResponse}},
+)
+@only_authorized_user
+@only_admin_user
+async def get_user(
+    request: Request,
+    user_id: int,
+) -> GetUserResponse:
+    db_conn: SAConnection = request.state.db_conn
+    found_user = await db_repo.get_user(conn=db_conn, user_id=user_id)
+    return GetUserResponse(user=found_user)
+
+
+@router.get('/user/search', response_model=list[UserResponse], responses={401: {'model': HttpExceptionResponse}})
+@only_authorized_user
+@only_admin_user
+async def search_user(
+    request: Request,
+    username: str | None = None,
+    full_name: str | None = None,
+    email: str | None = None,
+    role: UserRole | None = None,
+    is_active: bool | None = None,
+    offset: int = Query(default=0, gt=-1),
+    limit: int = Query(default=30, gt=0, le=30),
+) -> list[User]:
+    db_conn: SAConnection = request.state.db_conn
+    return [
+        usr
+        async for usr in db_repo.search_user(
+            conn=db_conn,
+            values={
+                'username': username,
+                'full_name': full_name,
+                'email': email,
+                'role': role,
+                'is_active': is_active,
+            },
+            offset=offset,
+            limit=limit,
+        )
+    ]
+
+
+@router.get('/user/all', response_model=list[UserResponse], responses={401: {'model': HttpExceptionResponse}})
+@only_authorized_user
+@only_admin_user
+async def get_all_users(
+    request: Request,
+    offset: int = Query(default=0, gt=-1),
+    limit: int = Query(default=30, gt=0, le=30),
+) -> list[User]:
+    db_conn: SAConnection = request.state.db_conn
+    return [user async for user in db_repo.get_all_users(conn=db_conn, offset=offset, limit=limit)]
 
 
 @router.post(

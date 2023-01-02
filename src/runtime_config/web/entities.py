@@ -1,11 +1,18 @@
+import datetime
 import typing as t
 
 from pydantic.fields import Field
 from pydantic.main import BaseModel
 
+from runtime_config.entities.user import NewUserForm
 from runtime_config.enums.settings import ValueType
 from runtime_config.enums.status import ResponseStatus
+from runtime_config.enums.user import UserRole
 from runtime_config.repositories.db.entities import SettingData, SettingHistoryData
+
+
+class SignUpRequest(NewUserForm):
+    pass
 
 
 class OAuth2PasswordRequest(BaseModel):
@@ -21,6 +28,36 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    full_name: str | None
+    email: str
+    role: UserRole
+    is_active: bool
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+
+class CreateUserRequest(NewUserForm):
+    role: UserRole
+    is_active: bool
+
+
+class EditUserRequest(BaseModel):
+    id: int
+    username: str | None
+    full_name: str | None
+    email: str | None
+    password: str | None
+    role: UserRole | None
+    is_active: bool | None
+
+
+class GetUserResponse(BaseModel):
+    user: UserResponse | None
 
 
 class HttpExceptionResponse(BaseModel):

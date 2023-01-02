@@ -5,13 +5,13 @@ from aiopg.sa import SAConnection
 
 from runtime_config.config import get_config
 from runtime_config.db import close_db, get_db_conn, init_db
-from runtime_config.entities.user import NewAdminUser
+from runtime_config.entities.user import NewUserForm
 from runtime_config.services.account.user import create_admin_user
 
 SECRET_FIELDS = ['password']
 
 
-async def create_admin() -> None:
+async def create_admin_command() -> None:
     config = get_config()
     await init_db(config.db_dsn)
     try:
@@ -30,16 +30,16 @@ async def _create_admin(conn: SAConnection) -> None:
             print(f'You entered invalid data:\n{exc}\n')
 
     try:
-        await create_admin_user(conn=conn, user=admin_form.dict())
+        await create_admin_user(conn=conn, values=admin_form.dict())
     except Exception as exc:
         print(f'User create failed:\n{exc}')
     else:
         print('User created successful')
 
 
-def _input_form_value() -> NewAdminUser:
+def _input_form_value() -> NewUserForm:
     input_data = {}
-    field_names = filter(lambda name: name not in SECRET_FIELDS, NewAdminUser.__fields__.keys())
+    field_names = filter(lambda name: name not in SECRET_FIELDS, NewUserForm.__fields__.keys())
     promt_template = 'Input {field}: '
     for name in field_names:
         value = input(promt_template.format(field=name)) or None
@@ -47,4 +47,4 @@ def _input_form_value() -> NewAdminUser:
 
     password = getpass.getpass(promt_template.format(field='password'))
 
-    return NewAdminUser(password=password, **input_data)
+    return NewUserForm(password=password, **input_data)

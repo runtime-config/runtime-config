@@ -90,16 +90,55 @@ async def get_service_settings(
         yield SettingData(**row)
 
 
-async def create_user(conn: SAConnection, data: dict[str, t.Any]) -> User:
-    query = insert(UserModel).values(data).returning(UserModel)
+async def create_user(conn: SAConnection, values: dict[str, t.Any]) -> User:
+    query = insert(UserModel).values(values).returning(UserModel)
     row = await (await conn.execute(query)).fetchone()
     return User(**row)
 
 
-async def get_user(conn: SAConnection, username: str) -> User | None:
-    query = select(UserModel).where(UserModel.username == username)
+async def get_user(conn: SAConnection, user_id: int | None = None, username: str = None) -> User | None:
+    assert any((user_id, username)), 'user_id or username must be not none'
+    query = select(UserModel)
+    if user_id:
+        query = query.where(UserModel.id == user_id)
+    else:
+        query = query.where(UserModel.username == username)
     user = await (await conn.execute(query)).fetchone()
     return User(**user) if user else None
+
+
+async def delete_user(conn: SAConnection, user_id: int) -> bool:
+    query = delete(UserModel).where(UserModel.id == user_id).returning(UserModel.id)
+    deleted_row_id = await (await conn.execute(query)).fetchone()
+    return bool(deleted_row_id)
+
+
+async def edit_user(conn: SAConnection, user_id: int, values: dict[str, t.Any]) -> User | None:
+    query = update(UserModel).where(UserModel.id == user_id).values(values).returning(UserModel)
+    row = await (await conn.execute(query)).fetchone()
+    return User(**row) if row else None
+
+
+async def search_user(
+    conn: SAConnection, values: dict[str, t.Any | None], offset: int = 0, limit: int = 30
+) -> t.AsyncIterable[User]:
+    query = select(UserModel).offset(offset).limit(limit)
+
+    for field, val in values.items():
+        if val is not None:
+            query = query.where(getattr(UserModel, field) == val)
+
+    async for row in conn.execute(query):
+        yield User(**row)
+
+
+async def get_all_users(conn: SAConnection, offset: int = 0, limit: int | None = None) -> t.AsyncIterable[User]:
+    query = select(UserModel).offset(offset)
+    if limit:
+        query = query.limit(limit)
+
+    async for row in conn.execute(query):
+        yield User(**row)
 
 
 async def get_user_refresh_token(conn: SAConnection, refresh_token: str, user_id: int) -> Token | None:
