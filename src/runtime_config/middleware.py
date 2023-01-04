@@ -21,20 +21,23 @@ async def db_conn_middleware(request: Request, call_next: CALL_NEXT_TYPE) -> Res
         return await call_next(request)
 
 
-async def current_user_middleware(request: Request, call_next: CALL_NEXT_TYPE) -> Response:
-    db_conn: SAConnection = request.state.db_conn
-    jwt_token_service: JwtTokenService = request.app.state.jwt_token_service
+class CurrentUserMiddleware:
+    def __init__(self, jwt_token_service: JwtTokenService):
+        self.jwt_token_service = jwt_token_service
 
-    token = None
-    try:
-        token = await oauth2_scheme(request)
-    except HTTPException:
-        pass
+    async def __call__(self, request: Request, call_next: CALL_NEXT_TYPE) -> Response:
+        db_conn: SAConnection = request.state.db_conn
 
-    if token:
-        request.state.user = await jwt_token_service.get_user_from_access_token(db_conn=db_conn, token=token)
-    else:
-        request.state.user = None
-        logger.info('Authorization token was not found in request')
+        token = None
+        try:
+            token = await oauth2_scheme(request)
+        except HTTPException:
+            pass
 
-    return await call_next(request)
+        if token:
+            request.state.user = await self.jwt_token_service.get_user_from_access_token(db_conn=db_conn, token=token)
+        else:
+            request.state.user = None
+            logger.info('Authorization token was not found in request')
+
+        return await call_next(request)

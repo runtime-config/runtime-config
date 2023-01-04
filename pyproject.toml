@@ -46,7 +46,8 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 omit = [
-    "src/runtime_config/cli.py"
+    "src/runtime_config/cli.py",
+    "src/runtime_config/wsgi.py"
 ]
 
 [tool.black]

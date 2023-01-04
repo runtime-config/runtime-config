@@ -33,8 +33,8 @@ class Config(BaseSettings):
     log_level: LogLevel = LogLevel.info
 
     jwt_token_algorithm: str = Field(default='HS256')
-    jwt_access_token_expire_time: int
-    jwt_refresh_token_expire_time: int
+    jwt_access_token_expire_time: int = Field(default=5)
+    jwt_refresh_token_expire_time: int = Field(default=14400)
 
     # db
     db_host: str = Field(default='db')

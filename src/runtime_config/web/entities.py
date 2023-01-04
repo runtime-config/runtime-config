@@ -56,12 +56,12 @@ class EditUserRequest(BaseModel):
     is_active: bool | None
 
 
-class GetUserResponse(BaseModel):
-    user: UserResponse | None
-
-
 class HttpExceptionResponse(BaseModel):
     detail: str
+
+
+class DeleteItemsResponse(t.TypedDict, total=False):
+    ids: list[int]
 
 
 class GetSettingResponse(BaseModel):

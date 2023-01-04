@@ -15,10 +15,10 @@ from runtime_config.repositories.db.entities import (
 )
 
 
-async def delete_setting(conn: SAConnection, setting_id: int) -> bool:
-    query = delete(Setting).where(Setting.id == setting_id).returning(Setting.id)
-    deleted_row_id = await (await conn.execute(query)).fetchone()
-    return bool(deleted_row_id)
+async def delete_settings(conn: SAConnection, setting_ids: list[int]) -> list[int]:
+    query = delete(Setting).where(Setting.id.in_(setting_ids)).returning(Setting.id)
+    deleted_rows_id = await (await conn.execute(query)).fetchall()
+    return [row[0] for row in deleted_rows_id]
 
 
 async def create_new_setting(conn: SAConnection, values: dict[str, t.Any]) -> SettingData | None:
@@ -97,20 +97,27 @@ async def create_user(conn: SAConnection, values: dict[str, t.Any]) -> User:
 
 
 async def get_user(conn: SAConnection, user_id: int | None = None, username: str = None) -> User | None:
-    assert any((user_id, username)), 'user_id or username must be not none'
+    users = await get_users(
+        conn=conn, user_ids=[user_id] if user_id else None, usernames=[username] if username else None
+    )
+    return users[0] if users else None
+
+
+async def get_users(conn: SAConnection, user_ids: list[int] | None = None, usernames: list[str] = None) -> list[User]:
+    assert any((user_ids, usernames)), 'user_ids or usernames must be not none'
     query = select(UserModel)
-    if user_id:
-        query = query.where(UserModel.id == user_id)
+    if user_ids:
+        query = query.where(UserModel.id.in_(user_ids))
     else:
-        query = query.where(UserModel.username == username)
-    user = await (await conn.execute(query)).fetchone()
-    return User(**user) if user else None
+        query = query.where(UserModel.username.in_(usernames))
+    users = await (await conn.execute(query)).fetchall()
+    return [User(**usr) for usr in users]
 
 
-async def delete_user(conn: SAConnection, user_id: int) -> bool:
-    query = delete(UserModel).where(UserModel.id == user_id).returning(UserModel.id)
-    deleted_row_id = await (await conn.execute(query)).fetchone()
-    return bool(deleted_row_id)
+async def delete_users(conn: SAConnection, user_ids: list[int]) -> list[int]:
+    query = delete(UserModel).where(UserModel.id.in_(user_ids)).returning(UserModel.id)
+    deleted_rows_id = await (await conn.execute(query)).fetchall()
+    return [row[0] for row in deleted_rows_id]
 
 
 async def edit_user(conn: SAConnection, user_id: int, values: dict[str, t.Any]) -> User | None:

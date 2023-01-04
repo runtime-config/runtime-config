@@ -58,10 +58,11 @@ async def test_create_setting__raise_unexpected_exc__return_400(
     assert resp_data == {'detail': 'Failed to create new setting'}
 
 
-async def test_delete_setting(async_client: AsyncClient, db_conn: SAConnection, setting_data):
+async def test_delete_settings(async_client: AsyncClient, db_conn: SAConnection, setting_data):
     # arrange
-    created = await create_setting(db_conn, setting_data)
-    url = f'/setting/delete/{created["id"]}'
+    setting_one = await create_setting(db_conn, setting_data)
+    setting_two = await create_setting(db_conn, {**setting_data, 'name': 'timeout2'})
+    url = f'/setting/delete?setting_id={setting_one["id"]}&setting_id={setting_two["id"]}'
 
     # act
     resp = await async_client.get(url)
@@ -69,23 +70,23 @@ async def test_delete_setting(async_client: AsyncClient, db_conn: SAConnection, 
 
     # assert
     assert resp.status_code == 200
-    assert resp_data == {'status': 'success'}
+    assert resp_data == {'ids': [setting_one['id'], setting_two['id']]}
     assert len(await get_all_settings(db_conn)) == 0
 
 
-async def test_delete_setting__setting_not_found__return_400(
+async def test_delete_settings__setting_not_found__return_empty_list(
     async_client: AsyncClient, db_conn: SAConnection, setting_data
 ):
     # arrange
-    url = f'/setting/delete/{999}'
+    url = f'/setting/delete?setting_id={999}'
 
     # act
     resp = await async_client.get(url)
     resp_data = resp.json()
 
     # assert
-    assert resp.status_code == 400
-    assert resp_data == {'detail': 'Could not find the setting with the specified id'}
+    assert resp.status_code == 200
+    assert resp_data == {'ids': []}
 
 
 async def test_edit_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
