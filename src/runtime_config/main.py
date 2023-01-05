@@ -3,7 +3,7 @@ from functools import partial
 
 from fastapi import FastAPI
 
-from runtime_config.config import Config, get_config
+from runtime_config.config import Config
 from runtime_config.db import close_db, init_db
 from runtime_config.logger import init_logger
 from runtime_config.middleware import (
@@ -24,8 +24,7 @@ def get_middleware(jwt_token_service: JwtTokenService) -> list[MIDDLEWARE_TYPE]:
     return [CurrentUserMiddleware(jwt_token_service), db_conn_middleware]
 
 
-def app_factory(app_hooks: t.Callable[[FastAPI, Config], None] = init_hooks) -> FastAPI:
-    config = get_config()
+def app_factory(config: Config, app_hooks: t.Callable[[FastAPI, Config], None] = init_hooks) -> FastAPI:
     init_logger(log_mode=config.log_mode.value, log_level=config.log_level)
 
     app = FastAPI(title='runtime-config')

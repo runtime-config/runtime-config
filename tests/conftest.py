@@ -1,4 +1,5 @@
 import typing as t
+from pathlib import Path
 
 import pytest
 from aiopg.sa import Engine, SAConnection
@@ -17,9 +18,8 @@ from tests.fixtures import *  # noqa: F403, F401
 
 @pytest.fixture(scope='session', name='config', autouse=True)
 def config_fixture() -> Config:
-    config = get_config()
-    config.db_name = f'{config.db_name}_test'
-    return config
+    env_file = Path(__name__).absolute().parent / 'dot_env'
+    return get_config(env_file=env_file)
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -56,9 +56,9 @@ def jwt_token_service_fixture(app):
 
 
 @pytest.fixture(name='app')
-async def app_fixture(mocker: MockerFixture, db_conn: SAConnection) -> t.AsyncGenerator[FastAPI, None]:
+async def app_fixture(mocker: MockerFixture, config, db_conn: SAConnection) -> t.AsyncGenerator[FastAPI, None]:
     mocker.patch('runtime_config.main.db_conn_middleware', new=get_db_conn_middleware_mock(db_conn))
-    app = app_factory(app_hooks=lambda *args, **kwargs: None)
+    app = app_factory(config=config, app_hooks=lambda *args, **kwargs: None)
     yield app
 
 

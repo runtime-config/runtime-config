@@ -3,7 +3,7 @@ import getpass
 import pydantic
 from aiopg.sa import SAConnection
 
-from runtime_config.config import get_config
+from runtime_config.config import Config
 from runtime_config.db import close_db, get_db_conn, init_db
 from runtime_config.entities.user import NewUserForm
 from runtime_config.services.account.user import create_admin_user
@@ -11,8 +11,7 @@ from runtime_config.services.account.user import create_admin_user
 SECRET_FIELDS = ['password']
 
 
-async def create_admin_command() -> None:
-    config = get_config()
+async def create_admin_command(config: Config) -> None:
     await init_db(config.db_dsn)
     try:
         async with get_db_conn() as conn:

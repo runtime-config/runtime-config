@@ -8,6 +8,7 @@ from pydantic.env_settings import BaseSettings
 from pydantic.fields import Field
 
 _inst: dict[str, Config] = {}
+project_dir: Path = Path(__file__).absolute().parent.parent.parent
 
 
 class LogMode(Enum):
@@ -25,7 +26,7 @@ class LogLevel(Enum):
 
 
 class Config(BaseSettings):
-    project_dir: Path = Path(__file__).absolute().parent.parent.parent
+    project_dir: Path = project_dir
     app_dir: Path = Path(__file__).absolute().parent
 
     secret_key: str = Field(min_length=50)
@@ -55,16 +56,12 @@ class Config(BaseSettings):
             path=f'/{self.db_name}',
         )
 
-    class Config:
-        project_dir: Path = Path(__file__).absolute().parent.parent.parent
-        env_file = project_dir / '.env'
 
-
-def get_config() -> Config:
+def get_config(env_file: Path = project_dir / '.env') -> Config:
     try:
         config = _inst['conf']
     except KeyError:
-        config = Config()
+        config = Config(_env_file=env_file)
         _inst['conf'] = config
 
     return config

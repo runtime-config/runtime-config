@@ -1,0 +1,8 @@
+# APP
+SECRET_KEY=334g3jh544ggbbui24nvun2e334g3jh544ggbbui24nvun2e53g
+
+# DATABASE
+DB_USER=admin
+DB_PASSWORD=admin
+DB_NAME=runtime_config_test
+DB_HOST=127.0.0.1
