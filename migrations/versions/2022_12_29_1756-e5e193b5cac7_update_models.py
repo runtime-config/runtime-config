@@ -2,7 +2,8 @@
 table setting and setting_history normalized
 add field setting.created_by_user_id
 add default value for setting.updated_at
-drop fields setting.created_by_db_user, setting_history.created_by_db_user, setting_history.deleted_by_db_user
+drop fields setting.created_by_db_user, setting_history.created_by_db_user,
+     setting_history.deleted_by_db_user
 drop all triggers
 
 Revision ID: e5e193b5cac7
@@ -112,13 +113,18 @@ def upgrade() -> None:
 
     created_services = create_services()
     replace_service_name_to_service_id(
-        created_services=created_services,
-        target_table=sa.Table('setting', meta, autoload=True)
+        created_services=created_services, target_table=sa.Table('setting', meta, autoload=True)
     )
-    op.alter_column('setting', 'service_name', type_=sa.Integer(), postgresql_using='service_name::integer')
-    op.alter_column('setting', column_name='service_name', new_column_name='service_name_id', nullable=False)
+    op.alter_column(
+        'setting', 'service_name', type_=sa.Integer(), postgresql_using='service_name::integer'
+    )
+    op.alter_column(
+        'setting', column_name='service_name', new_column_name='service_name_id', nullable=False
+    )
     op.drop_constraint('unique_setting_name_per_service', 'setting', type_='unique')
-    op.create_unique_constraint('unique_setting_name_per_service', 'setting', ['name', 'service_name_id'])
+    op.create_unique_constraint(
+        'unique_setting_name_per_service', 'setting', ['name', 'service_name_id']
+    )
     op.create_foreign_key(None, 'setting', 'service_name', ['service_name_id'], ['id'])
 
     op.drop_column('setting', 'created_by_db_user')
@@ -130,10 +136,20 @@ def upgrade() -> None:
 
     replace_service_name_to_service_id(
         created_services=created_services,
-        target_table=sa.Table('setting_history', meta, autoload=True)
+        target_table=sa.Table('setting_history', meta, autoload=True),
     )
-    op.alter_column('setting_history', 'service_name', type_=sa.Integer(), postgresql_using='service_name::integer')
-    op.alter_column('setting_history', column_name='service_name', new_column_name='service_name_id', nullable=False)
+    op.alter_column(
+        'setting_history',
+        'service_name',
+        type_=sa.Integer(),
+        postgresql_using='service_name::integer',
+    )
+    op.alter_column(
+        'setting_history',
+        column_name='service_name',
+        new_column_name='service_name_id',
+        nullable=False,
+    )
     op.create_foreign_key(None, 'setting_history', 'service_name', ['service_name_id'], ['id'])
 
     op.drop_column('setting_history', 'created_by_db_user')
@@ -151,7 +167,9 @@ def downgrade() -> None:
     op.alter_column('setting', 'service_name_id', type_=sa.Text())
     replace_service_id_to_service_name(sa.Table('setting', meta, autoload=True))
     op.alter_column('setting', column_name='service_name_id', new_column_name='service_name')
-    op.create_unique_constraint('unique_setting_name_per_service', 'setting', ['name', 'service_name'])
+    op.create_unique_constraint(
+        'unique_setting_name_per_service', 'setting', ['name', 'service_name']
+    )
 
     op.drop_constraint('setting_created_by_user_id_fkey', 'setting', type_='foreignkey')
     op.drop_column('setting', 'created_by_user_id')
@@ -165,15 +183,23 @@ def downgrade() -> None:
 
     op.add_column('setting_history', sa.Column('deleted_by_db_user', sa.Text, nullable=True))
 
-    op.drop_constraint('setting_history_created_by_user_id_fkey', 'setting_history', type_='foreignkey')
-    op.drop_constraint('setting_history_deleted_by_user_id_fkey', 'setting_history', type_='foreignkey')
+    op.drop_constraint(
+        'setting_history_created_by_user_id_fkey', 'setting_history', type_='foreignkey'
+    )
+    op.drop_constraint(
+        'setting_history_deleted_by_user_id_fkey', 'setting_history', type_='foreignkey'
+    )
     op.drop_column('setting_history', 'created_by_user_id')
     op.drop_column('setting_history', 'deleted_by_user_id')
 
-    op.drop_constraint('setting_history_service_name_id_fkey', 'setting_history', type_='foreignkey')
+    op.drop_constraint(
+        'setting_history_service_name_id_fkey', 'setting_history', type_='foreignkey'
+    )
     op.alter_column('setting_history', 'service_name_id', type_=sa.Text())
     replace_service_id_to_service_name(sa.Table('setting_history', meta, autoload=True))
-    op.alter_column('setting_history', column_name='service_name_id', new_column_name='service_name')
+    op.alter_column(
+        'setting_history', column_name='service_name_id', new_column_name='service_name'
+    )
 
     op.drop_table('token')
     op.drop_table('user')

@@ -21,14 +21,20 @@ crypt_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 class JwtTokenService:
     def __init__(
-        self, secret_key: str, access_token_expire_time: int, refresh_token_expire_time: int, algorithm: str = 'HS256'
+        self,
+        secret_key: str,
+        access_token_expire_time: int,
+        refresh_token_expire_time: int,
+        algorithm: str = 'HS256',
     ) -> None:
         self._secret_key: str = secret_key
         self.access_token_expire_time: timedelta = timedelta(minutes=access_token_expire_time)
         self.refresh_token_expire_time: timedelta = timedelta(minutes=refresh_token_expire_time)
         self.algorithm = algorithm
 
-    async def refresh_token_pair(self, db_conn: SAConnection, refresh_token: str) -> tuple[str | None, str | None]:
+    async def refresh_token_pair(
+        self, db_conn: SAConnection, refresh_token: str
+    ) -> tuple[str | None, str | None]:
         new_access_token, new_refresh_token = None, None
 
         _, decoded_token = self._decode_token(refresh_token)
@@ -40,12 +46,16 @@ class JwtTokenService:
             logger.info('User not found from refresh token')
             return new_access_token, new_refresh_token
 
-        found_token = await get_user_refresh_token(conn=db_conn, refresh_token=refresh_token, user_id=user.id)
+        found_token = await get_user_refresh_token(
+            conn=db_conn, refresh_token=refresh_token, user_id=user.id
+        )
         if not found_token:
             logger.info('Refresh token not found in database')
             return new_access_token, new_refresh_token
 
-        new_access_token, new_refresh_token = await self.create_token_pair(db_conn=db_conn, user=user)
+        new_access_token, new_refresh_token = await self.create_token_pair(
+            db_conn=db_conn, user=user
+        )
         return new_access_token, new_refresh_token
 
     async def create_token_pair(self, db_conn: SAConnection, user: User) -> tuple[str, str]:
@@ -55,7 +65,10 @@ class JwtTokenService:
         return access, refresh
 
     def _create_access_token(self, user: User) -> str:
-        token_payload = {'sub': user.username, 'exp': datetime.utcnow() + self.access_token_expire_time}
+        token_payload = {
+            'sub': user.username,
+            'exp': datetime.utcnow() + self.access_token_expire_time,
+        }
         token = jwt.encode(token_payload, key=self._secret_key, algorithm=self.algorithm)
         return token
 

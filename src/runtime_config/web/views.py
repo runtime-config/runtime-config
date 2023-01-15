@@ -97,15 +97,23 @@ class AccountViews:
         payload: OAuth2PasswordRequest,
     ) -> dict[str, str]:
         db_conn: SAConnection = request.state.db_conn
-        user = await authenticate_user(db_conn=db_conn, username=payload.username, password=payload.password)
+        user = await authenticate_user(
+            db_conn=db_conn, username=payload.username, password=payload.password
+        )
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='Incorrect username or password',
                 headers={'WWW-Authenticate': 'Bearer'},
             )
-        access_token, refresh_token = await self.jwt_token_service.create_token_pair(db_conn=db_conn, user=user)
-        return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': 'bearer'}
+        access_token, refresh_token = await self.jwt_token_service.create_token_pair(
+            db_conn=db_conn, user=user
+        )
+        return {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'token_type': 'bearer',
+        }
 
     async def update_tokens(
         self,
@@ -123,7 +131,11 @@ class AccountViews:
                 detail='Not valid refresh token',
             )
 
-        return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': 'bearer'}
+        return {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'token_type': 'bearer',
+        }
 
     @only_authorized_user
     async def logout(self, request: Request) -> OperationStatusResponse:
@@ -228,7 +240,9 @@ class UserViews:
     ) -> User:
         db_conn: SAConnection = request.state.db_conn
         edited_user = await db_repo.edit_user(
-            conn=db_conn, user_id=payload.id, values=payload.dict(exclude={'id'}, exclude_unset=True)
+            conn=db_conn,
+            user_id=payload.id,
+            values=payload.dict(exclude={'id'}, exclude_unset=True),
         )
         if not edited_user:
             raise HTTPException(
@@ -288,7 +302,9 @@ class UserViews:
         limit: int = Query(default=30, gt=0, le=30),
     ) -> list[User]:
         db_conn: SAConnection = request.state.db_conn
-        return [user async for user in db_repo.get_all_users(conn=db_conn, offset=offset, limit=limit)]
+        return [
+            user async for user in db_repo.get_all_users(conn=db_conn, offset=offset, limit=limit)
+        ]
 
 
 class SettingViews:
@@ -300,7 +316,10 @@ class SettingViews:
             endpoint=self.create_setting,
             response_model=SettingData,
             methods=['POST'],
-            responses={400: {'model': HttpExceptionResponse}, 401: {'model': HttpExceptionResponse}},
+            responses={
+                400: {'model': HttpExceptionResponse},
+                401: {'model': HttpExceptionResponse},
+            },
             tags=['setting'],
         )
 
@@ -317,7 +336,10 @@ class SettingViews:
             endpoint=self.edit_setting,
             response_model=SettingData,
             methods=['POST'],
-            responses={400: {'model': HttpExceptionResponse}, 401: {'model': HttpExceptionResponse}},
+            responses={
+                400: {'model': HttpExceptionResponse},
+                401: {'model': HttpExceptionResponse},
+            },
             tags=['setting'],
         )
         self.router.add_api_route(
@@ -384,7 +406,9 @@ class SettingViews:
     ) -> SettingData:
         db_conn: SAConnection = request.state.db_conn
         edited_setting = await db_repo.edit_setting(
-            conn=db_conn, setting_id=payload.id, values=payload.dict(exclude={'id'}, exclude_unset=True)
+            conn=db_conn,
+            setting_id=payload.id,
+            values=payload.dict(exclude={'id'}, exclude_unset=True),
         )
         if not edited_setting:
             raise HTTPException(

@@ -56,7 +56,9 @@ def jwt_token_service_fixture(app):
 
 
 @pytest.fixture(name='app')
-async def app_fixture(mocker: MockerFixture, config, db_conn: SAConnection) -> t.AsyncGenerator[FastAPI, None]:
+async def app_fixture(
+    mocker: MockerFixture, config, db_conn: SAConnection
+) -> t.AsyncGenerator[FastAPI, None]:
     mocker.patch('runtime_config.main.db_conn_middleware', new=get_db_conn_middleware_mock(db_conn))
     app = app_factory(config=config, app_hooks=lambda *args, **kwargs: None)
     yield app

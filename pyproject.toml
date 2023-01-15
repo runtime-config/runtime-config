@@ -52,7 +52,7 @@ omit = [
 
 [tool.black]
 target_version = ['py310']
-line-length = 119
+line-length = 100
 skip_string_normalization = true
 
 [tool.isort]

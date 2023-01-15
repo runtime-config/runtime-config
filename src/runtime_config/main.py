@@ -24,7 +24,9 @@ def get_middleware(jwt_token_service: JwtTokenService) -> list[MIDDLEWARE_TYPE]:
     return [CurrentUserMiddleware(jwt_token_service), db_conn_middleware]
 
 
-def app_factory(config: Config, app_hooks: t.Callable[[FastAPI, Config], None] = init_hooks) -> FastAPI:
+def app_factory(
+    config: Config, app_hooks: t.Callable[[FastAPI, Config], None] = init_hooks
+) -> FastAPI:
     init_logger(log_mode=config.log_mode.value, log_level=config.log_level)
 
     app = FastAPI(title='runtime-config')

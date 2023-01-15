@@ -40,10 +40,10 @@ trigger_create_history_entry_for_setting = """
     BEGIN
         IF TG_OP = 'UPDATE'
         THEN
-            INSERT INTO setting_history (setting_id, name, value, value_type, disable, service_name, user_name,
-                                         updated_at)
-            VALUES (OLD.id, OLD.name, OLD.value, OLD.value_type, OLD.disable, OLD.service_name, OLD.user_name,
-                    OLD.updated_at);
+            INSERT INTO setting_history (setting_id, name, value, value_type, disable,
+                                         service_name, user_name, updated_at)
+            VALUES (OLD.id, OLD.name, OLD.value, OLD.value_type, OLD.disable,
+                    OLD.service_name, OLD.user_name, OLD.updated_at);
         END IF;
         RETURN NEW;
     END;
@@ -91,7 +91,9 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint('id'),
     )
-    op.create_unique_constraint('unique_setting_name_per_service', 'setting', ['name', 'service_name'])
+    op.create_unique_constraint(
+        'unique_setting_name_per_service', 'setting', ['name', 'service_name']
+    )
     op.execute(trigger_fill_user_in_setting_row)
     op.execute(trigger_create_history_entry_for_setting)
 

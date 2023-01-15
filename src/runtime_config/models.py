@@ -31,7 +31,9 @@ class Setting(Base):  # type: ignore[valid-type, misc]
     created_by_user_id = Column(Integer, ForeignKey('user.id'))
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    __table_args__ = (UniqueConstraint('name', 'service_name_id', name='unique_setting_name_per_service'),)
+    __table_args__ = (
+        UniqueConstraint('name', 'service_name_id', name='unique_setting_name_per_service'),
+    )
 
 
 class ServiceName(Base):  # type: ignore[valid-type, misc]

@@ -8,7 +8,9 @@ from runtime_config.enums.settings import ValueType
 from tests.db_utils import count_settings, create_setting, get_all_settings
 
 
-async def test_create_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
+async def test_create_setting(
+    mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data
+):
     # arrange
     url = '/setting/create'
 
@@ -89,7 +91,9 @@ async def test_delete_settings__setting_not_found__return_empty_list(
     assert resp_data == {'ids': []}
 
 
-async def test_edit_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
+async def test_edit_setting(
+    mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data
+):
     # arrange
     url = '/setting/edit'
     created = await create_setting(db_conn, setting_data)
@@ -128,7 +132,9 @@ async def test_edit_setting__setting_not_found__return_400(
     assert resp_data == {'detail': 'Setting with the specified id was not found'}
 
 
-async def test_get_setting(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
+async def test_get_setting(
+    mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data
+):
     # arrange
     created = await create_setting(db_conn, setting_data)
     await async_client.post('/setting/edit', json={'id': created['id'], 'value': '444'})
@@ -188,7 +194,9 @@ async def test_get_settings__getting_a_non_existent_setting__return_empty_resp(
     assert resp_data == {'change_history': None, 'setting': None}
 
 
-async def test_search_settings(mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data):
+async def test_search_settings(
+    mocker: MockerFixture, async_client: AsyncClient, db_conn: SAConnection, setting_data
+):
     # arrange
     await create_setting(db_conn, setting_data)
     await create_setting(

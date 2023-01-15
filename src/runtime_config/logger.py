@@ -31,7 +31,9 @@ def _init_structlog(log_level: int, processors: list[Processor]) -> None:
     )
 
 
-def _init_logging(log_level: int, processors: list[Processor], renderer: ConsoleRenderer | JSONRenderer) -> None:
+def _init_logging(
+    log_level: int, processors: list[Processor], renderer: ConsoleRenderer | JSONRenderer
+) -> None:
     dictConfig(
         {
             'version': 1,
@@ -64,7 +66,9 @@ def _init_logging(log_level: int, processors: list[Processor], renderer: Console
 
 def init_logger(log_mode: str, log_level: LogLevel = LogLevel.info) -> None:
     level = getattr(logging, log_level.value.upper())
-    renderer: ConsoleRenderer | JSONRenderer = json_renderer if log_mode == 'json' else simple_renderer
+    renderer: ConsoleRenderer | JSONRenderer = (
+        json_renderer if log_mode == 'json' else simple_renderer
+    )
 
     _init_logging(level, processors, renderer)
     _init_structlog(level, processors)

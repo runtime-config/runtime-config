@@ -33,7 +33,9 @@ async def create_new_setting(conn: SAConnection, values: dict[str, t.Any]) -> Se
     return created_setting
 
 
-async def edit_setting(conn: SAConnection, setting_id: int, values: dict[str, t.Any]) -> SettingData | None:
+async def edit_setting(
+    conn: SAConnection, setting_id: int, values: dict[str, t.Any]
+) -> SettingData | None:
     query = update(Setting).where(Setting.id == setting_id).values(values).returning(Setting)
     row = await (await conn.execute(query)).fetchone()
     return SettingData(**row) if row else None
@@ -96,14 +98,20 @@ async def create_user(conn: SAConnection, values: dict[str, t.Any]) -> User:
     return User(**row)
 
 
-async def get_user(conn: SAConnection, user_id: int | None = None, username: str = None) -> User | None:
+async def get_user(
+    conn: SAConnection, user_id: int | None = None, username: str = None
+) -> User | None:
     users = await get_users(
-        conn=conn, user_ids=[user_id] if user_id else None, usernames=[username] if username else None
+        conn=conn,
+        user_ids=[user_id] if user_id else None,
+        usernames=[username] if username else None,
     )
     return users[0] if users else None
 
 
-async def get_users(conn: SAConnection, user_ids: list[int] | None = None, usernames: list[str] = None) -> list[User]:
+async def get_users(
+    conn: SAConnection, user_ids: list[int] | None = None, usernames: list[str] = None
+) -> list[User]:
     assert any((user_ids, usernames)), 'user_ids or usernames must be not none'
     query = select(UserModel)
     if user_ids:
@@ -139,7 +147,9 @@ async def search_user(
         yield User(**row)
 
 
-async def get_all_users(conn: SAConnection, offset: int = 0, limit: int | None = None) -> t.AsyncIterable[User]:
+async def get_all_users(
+    conn: SAConnection, offset: int = 0, limit: int | None = None
+) -> t.AsyncIterable[User]:
     query = select(UserModel).offset(offset)
     if limit:
         query = query.limit(limit)
@@ -148,9 +158,13 @@ async def get_all_users(conn: SAConnection, offset: int = 0, limit: int | None =
         yield User(**row)
 
 
-async def get_user_refresh_token(conn: SAConnection, refresh_token: str, user_id: int) -> Token | None:
+async def get_user_refresh_token(
+    conn: SAConnection, refresh_token: str, user_id: int
+) -> Token | None:
     query = select(TokenModel).where(
-        TokenModel.user_id == user_id, TokenModel.token == refresh_token, TokenModel.type == TokenType.refresh
+        TokenModel.user_id == user_id,
+        TokenModel.token == refresh_token,
+        TokenModel.type == TokenType.refresh,
     )
     token = await (await conn.execute(query)).fetchone()
     return Token(**token) if token else None
@@ -162,4 +176,8 @@ async def delete_user_refresh_token(conn: SAConnection, user_id: int) -> None:
 
 async def update_refresh_token(conn: SAConnection, new_token: str, user_id: int) -> None:
     await delete_user_refresh_token(conn=conn, user_id=user_id)
-    await conn.execute(insert(TokenModel).values({'user_id': user_id, 'token': new_token, 'type': TokenType.refresh}))
+    await conn.execute(
+        insert(TokenModel).values(
+            {'user_id': user_id, 'token': new_token, 'type': TokenType.refresh}
+        )
+    )

@@ -17,14 +17,17 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column(
-        'setting_history', sa.Column('is_deleted', sa.Boolean(), server_default=sa.text('false'), nullable=False)
+        'setting_history',
+        sa.Column('is_deleted', sa.Boolean(), server_default=sa.text('false'), nullable=False),
     )
     op.add_column('setting_history', sa.Column('deleted_by_db_user', sa.Text(), nullable=True))
 
     op.drop_column('setting_history', 'setting_id')
 
     op.alter_column('setting', column_name='user_name', new_column_name='created_by_db_user')
-    op.alter_column('setting_history', column_name='user_name', new_column_name='created_by_db_user')
+    op.alter_column(
+        'setting_history', column_name='user_name', new_column_name='created_by_db_user'
+    )
 
     op.execute('DROP TRIGGER trigger_create_history_entry_for_setting ON setting;')
     op.execute('DROP FUNCTION create_history_entry_for_setting;')
@@ -39,10 +42,14 @@ def downgrade() -> None:
     op.drop_column('setting_history', 'deleted_by_db_user')
     op.drop_column('setting_history', 'is_deleted')
 
-    op.add_column('setting_history', sa.Column('setting_id', sa.INTEGER(), autoincrement=False, nullable=True))
+    op.add_column(
+        'setting_history', sa.Column('setting_id', sa.INTEGER(), autoincrement=False, nullable=True)
+    )
 
     op.alter_column('setting', column_name='created_by_db_user', new_column_name='user_name')
-    op.alter_column('setting_history', column_name='created_by_db_user', new_column_name='user_name')
+    op.alter_column(
+        'setting_history', column_name='created_by_db_user', new_column_name='user_name'
+    )
 
     op.execute('DROP TRIGGER trigger_create_history_entry_for_setting ON setting;')
     op.execute('DROP FUNCTION create_history_entry_for_setting;')

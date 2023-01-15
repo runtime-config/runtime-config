@@ -44,8 +44,12 @@ async def test_setting__update_row__historical_record_created(
     created_setting = await create_setting(db_conn, setting_data)
 
     # act
-    count_history_before = await (await db_conn.execute(select(func.count()).select_from(SettingHistory))).fetchone()
-    await db_conn.execute(update(Setting).where(Setting.id == created_setting['id']).values(value=100))
+    count_history_before = await (
+        await db_conn.execute(select(func.count()).select_from(SettingHistory))
+    ).fetchone()
+    await db_conn.execute(
+        update(Setting).where(Setting.id == created_setting['id']).values(value=100)
+    )
     history_records = await (await db_conn.execute(select(SettingHistory))).fetchall()
 
     # assert
@@ -69,7 +73,9 @@ async def test_setting__delete_row__row_moved_to_setting_history_table(
     created_setting = await create_setting(db_conn, setting_data)
 
     # act
-    count_history_before = await (await db_conn.execute(select(func.count()).select_from(SettingHistory))).fetchone()
+    count_history_before = await (
+        await db_conn.execute(select(func.count()).select_from(SettingHistory))
+    ).fetchone()
     await db_conn.execute(delete(Setting).where(Setting.id == created_setting['id']))
     history_records = await (await db_conn.execute(select(SettingHistory))).fetchall()
 
@@ -85,12 +91,14 @@ async def test_setting__delete_row__row_moved_to_setting_history_table(
     }
 
 
-async def test_setting__create_two_settings_with_same_name_in_one_service__historical_record_created__return_error(
+async def test_setting__create_two_settings_with_same_name_in_one_service__historical_record_created__return_error(  # noqa: E501
     db_conn: SAConnection,
     setting_data,
 ):
     # arrange
-    expected_error = 'duplicate key value violates unique constraint "unique_setting_name_per_service"'
+    expected_error = (
+        'duplicate key value violates unique constraint "unique_setting_name_per_service"'
+    )
     await create_setting(db_conn, setting_data)
     setting_data2 = {
         **setting_data,

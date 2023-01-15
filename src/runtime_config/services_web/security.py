@@ -24,14 +24,17 @@ def only_authorized_user(func: t.Callable[P, t.Awaitable[T]]) -> t.Callable[P, t
         if user is None:
             raise HTTPException(
                 detail=(
-                    'Authorization required. Please check that you have passed the token in the request '
-                    'headers and that it is not out of date.'
+                    'Authorization required. Please check that you have passed the token in '
+                    'the request headers and that it is not out of date.'
                 ),
                 **exception_params,
             )
         if not user.is_active:
             raise HTTPException(
-                detail='This user is not active. Please activate user or contact with your administrator.',
+                detail=(
+                    'This user is not active. Please activate user or contact with '
+                    'your administrator.'
+                ),
                 **exception_params,
             )
         return await func(*args, **kwargs)

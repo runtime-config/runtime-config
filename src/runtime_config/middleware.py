@@ -12,7 +12,9 @@ logger = get_logger(__name__)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 CALL_NEXT_TYPE = t.Callable[[Request], t.Awaitable[Response]]
-MIDDLEWARE_TYPE = t.Callable[[Request, t.Callable[[Request], t.Awaitable[Response]]], t.Awaitable[Response]]
+MIDDLEWARE_TYPE = t.Callable[
+    [Request, t.Callable[[Request], t.Awaitable[Response]]], t.Awaitable[Response]
+]
 
 
 async def db_conn_middleware(request: Request, call_next: CALL_NEXT_TYPE) -> Response:
@@ -35,7 +37,9 @@ class CurrentUserMiddleware:
             pass
 
         if token:
-            request.state.user = await self.jwt_token_service.get_user_from_access_token(db_conn=db_conn, token=token)
+            request.state.user = await self.jwt_token_service.get_user_from_access_token(
+                db_conn=db_conn, token=token
+            )
         else:
             request.state.user = None
             logger.info('Authorization token was not found in request')
