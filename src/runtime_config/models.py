@@ -27,11 +27,18 @@ class Setting(Base):  # type: ignore[valid-type, misc]
     value = Column(Text)
     value_type = Column(Enum(ValueType), nullable=False)
     is_disabled = Column(Boolean, server_default=expression.false(), nullable=False)
-    service_name = Column(Text, nullable=False)
-    created_by_db_user = Column(Text)
-    updated_at = Column(DateTime, nullable=False)
+    service_name_id = Column(Integer, ForeignKey('service_name.id'), nullable=False)
+    created_by_user_id = Column(Integer, ForeignKey('user.id'))
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    __table_args__ = (UniqueConstraint('name', 'service_name', name='unique_setting_name_per_service'),)
+    __table_args__ = (UniqueConstraint('name', 'service_name_id', name='unique_setting_name_per_service'),)
+
+
+class ServiceName(Base):  # type: ignore[valid-type, misc]
+    __tablename__ = 'service_name'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+    is_archived = Column(Boolean, server_default=expression.false(), nullable=False)
 
 
 class SettingHistory(Base):  # type: ignore[valid-type, misc]
@@ -42,11 +49,11 @@ class SettingHistory(Base):  # type: ignore[valid-type, misc]
     value = Column(Text)
     value_type = Column(Enum(ValueType), nullable=False)
     is_disabled = Column(Boolean, nullable=False)
-    service_name = Column(Text, nullable=False)
-    created_by_db_user = Column(Text, nullable=False)
+    service_name_id = Column(Integer, ForeignKey('service_name.id'), nullable=False)
     updated_at = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, server_default=expression.false(), nullable=False)
-    deleted_by_db_user = Column(Text)
+    created_by_user_id = Column(Integer, ForeignKey('user.id'))
+    deleted_by_user_id = Column(Integer, ForeignKey('user.id'))
 
 
 class User(Base):  # type: ignore[valid-type, misc]
@@ -61,6 +68,7 @@ class User(Base):  # type: ignore[valid-type, misc]
     is_active = Column(Boolean, server_default=expression.false(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    is_archived = Column(Boolean, server_default=expression.false(), nullable=False)
 
 
 class Token(Base):  # type: ignore[valid-type, misc]
